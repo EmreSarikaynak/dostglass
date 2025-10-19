@@ -28,6 +28,20 @@ export function CreateUserForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // Bayi bilgileri
+  const [companyName, setCompanyName] = useState('')
+  const [contactPerson, setContactPerson] = useState('')
+  const [phone, setPhone] = useState('')
+  const [mobile, setMobile] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [district, setDistrict] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [taxOffice, setTaxOffice] = useState('')
+  const [taxNumber, setTaxNumber] = useState('')
+  const [iban, setIban] = useState('')
+  const [notes, setNotes] = useState('')
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -35,17 +49,60 @@ export function CreateUserForm() {
     setLoading(true)
 
     try {
+      interface RequestBody {
+        email: string
+        password: string
+        role: 'admin' | 'bayi'
+        tenantName: string
+        dealerInfo?: {
+          companyName: string
+          contactPerson: string
+          phone: string
+          mobile: string
+          email: string
+          address: string
+          city: string
+          district: string
+          postalCode: string
+          taxOffice: string
+          taxNumber: string
+          iban: string
+          notes: string
+        }
+      }
+
+      const requestBody: RequestBody = {
+        email,
+        password,
+        role,
+        tenantName,
+      }
+
+      // Eğer bayi ise ek bilgileri ekle
+      if (role === 'bayi') {
+        requestBody.dealerInfo = {
+          companyName,
+          contactPerson,
+          phone,
+          mobile,
+          email,
+          address,
+          city,
+          district,
+          postalCode,
+          taxOffice,
+          taxNumber,
+          iban,
+          notes,
+        }
+      }
+
       const response = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email,
-          password,
-          role,
-          tenantName,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await response.json()
@@ -61,6 +118,19 @@ export function CreateUserForm() {
       setPassword('')
       setTenantName('')
       setRole('bayi')
+      // Bayi bilgilerini temizle
+      setCompanyName('')
+      setContactPerson('')
+      setPhone('')
+      setMobile('')
+      setAddress('')
+      setCity('')
+      setDistrict('')
+      setPostalCode('')
+      setTaxOffice('')
+      setTaxNumber('')
+      setIban('')
+      setNotes('')
       setLoading(false)
 
       setTimeout(() => {
@@ -151,6 +221,117 @@ export function CreateUserForm() {
                   helperText="Mevcut değilse oluşturulur"
                 />
               </Stack>
+
+              {/* Bayi ise ek bilgiler */}
+              {role === 'bayi' && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                    Bayi Bilgileri
+                  </Typography>
+
+                  <TextField
+                    fullWidth
+                    label="Firma Adı *"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required={role === 'bayi'}
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="Yetkili Kişi"
+                    value={contactPerson}
+                    onChange={(e) => setContactPerson(e.target.value)}
+                  />
+
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Telefon"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="0212 123 45 67"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Mobil"
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                      placeholder="0532 123 45 67"
+                    />
+                  </Stack>
+
+                  <TextField
+                    fullWidth
+                    label="Adres"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    multiline
+                    rows={2}
+                  />
+
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="İl"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
+                    <TextField
+                      fullWidth
+                      label="İlçe"
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                    />
+                    <TextField
+                      label="Posta Kodu"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      sx={{ width: { xs: '100%', sm: '150px' } }}
+                    />
+                  </Stack>
+
+                  <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                    Fatura Bilgileri
+                  </Typography>
+
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Vergi Dairesi *"
+                      value={taxOffice}
+                      onChange={(e) => setTaxOffice(e.target.value)}
+                      required={role === 'bayi'}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Vergi Numarası *"
+                      value={taxNumber}
+                      onChange={(e) => setTaxNumber(e.target.value)}
+                      required={role === 'bayi'}
+                      placeholder="1234567890"
+                    />
+                  </Stack>
+
+                  <TextField
+                    fullWidth
+                    label="IBAN"
+                    value={iban}
+                    onChange={(e) => setIban(e.target.value)}
+                    placeholder="TR00 0000 0000 0000 0000 0000 00"
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="Notlar"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    multiline
+                    rows={2}
+                    placeholder="Ek bilgiler..."
+                  />
+                </>
+              )}
 
               <Button
                 fullWidth

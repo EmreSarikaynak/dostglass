@@ -3,11 +3,28 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { getUserAndRole } from '@/lib/auth'
 import { z } from 'zod'
 
+const dealerInfoSchema = z.object({
+  companyName: z.string().min(1, 'Firma adı gereklidir'),
+  contactPerson: z.string().optional(),
+  phone: z.string().optional(),
+  mobile: z.string().optional(),
+  email: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  district: z.string().optional(),
+  postalCode: z.string().optional(),
+  taxOffice: z.string().min(1, 'Vergi dairesi gereklidir'),
+  taxNumber: z.string().min(1, 'Vergi numarası gereklidir'),
+  iban: z.string().optional(),
+  notes: z.string().optional(),
+})
+
 const createUserSchema = z.object({
   email: z.string().email('Geçerli bir e-posta adresi girin'),
   password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır'),
   role: z.enum(['admin', 'bayi'], { message: 'Rol admin veya bayi olmalıdır' }),
   tenantName: z.string().min(1, 'Firma adı gereklidir'),
+  dealerInfo: dealerInfoSchema.optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -32,7 +49,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password, role, tenantName } = validation.data
+    const { email, password, role, tenantName, dealerInfo } = validation.data
+
+    // Eğer bayi ise dealer bilgileri zorunlu
+    if (role === 'bayi' && !dealerInfo) {
+      return NextResponse.json(
+        { error: 'Bayi için ek bilgiler gereklidir' },
+        { status: 400 }
+      )
+    }
 
     // 1. Auth kullanıcısını oluştur
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -103,6 +128,38 @@ export async function POST(request: NextRequest) {
         { error: 'Kullanıcı rolü atanamadı' },
         { status: 500 }
       )
+    }
+
+    // 4. Eğer bayi ise dealer bilgilerini ekle
+    if (role === 'bayi' && dealerInfo) {
+      const { error: dealerError } = await supabaseAdmin
+        .from('dealers')
+        .insert({
+          user_id: authUser.user.id,
+          company_name: dealerInfo.companyName,
+          contact_person: dealerInfo.contactPerson,
+          phone: dealerInfo.phone,
+          mobile: dealerInfo.mobile,
+          email: dealerInfo.email,
+          address: dealerInfo.address,
+          city: dealerInfo.city,
+          district: dealerInfo.district,
+          postal_code: dealerInfo.postalCode,
+          tax_office: dealerInfo.taxOffice,
+          tax_number: dealerInfo.taxNumber,
+          iban: dealerInfo.iban,
+          notes: dealerInfo.notes,
+        })
+
+      if (dealerError) {
+        // Dealer bilgileri eklenemedi, her şeyi geri al
+        await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
+        console.error('Dealer bilgileri ekleme hatası:', dealerError)
+        return NextResponse.json(
+          { error: 'Bayi bilgileri kaydedilemedi' },
+          { status: 500 }
+        )
+      }
     }
 
     return NextResponse.json({
