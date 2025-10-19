@@ -15,10 +15,10 @@ const ALLOWED_TABLES = [
 // GET - Tüm kayıtları getir
 export async function GET(
   request: NextRequest,
-  { params }: { params: { table: string } }
+  { params }: { params: Promise<{ table: string }> }
 ) {
   try {
-    const table = params.table
+    const { table } = await params
 
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Geçersiz tablo' }, { status: 400 })
@@ -55,7 +55,7 @@ export async function GET(
 // POST - Yeni kayıt ekle
 export async function POST(
   request: NextRequest,
-  { params }: { params: { table: string } }
+  { params }: { params: Promise<{ table: string }> }
 ) {
   try {
     // Admin kontrolü
@@ -64,7 +64,7 @@ export async function POST(
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 })
     }
 
-    const table = params.table
+    const { table } = await params
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Geçersiz tablo' }, { status: 400 })
     }
@@ -93,7 +93,7 @@ export async function POST(
 // PUT - Kayıt güncelle
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { table: string } }
+  { params }: { params: Promise<{ table: string }> }
 ) {
   try {
     const user = await getUserAndRole()
@@ -101,7 +101,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 })
     }
 
-    const table = params.table
+    const { table } = await params
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Geçersiz tablo' }, { status: 400 })
     }
@@ -133,7 +133,7 @@ export async function PUT(
 // DELETE - Kayıt sil
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { table: string } }
+  { params }: { params: Promise<{ table: string }> }
 ) {
   try {
     const user = await getUserAndRole()
@@ -141,7 +141,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 })
     }
 
-    const table = params.table
+    const { table } = await params
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Geçersiz tablo' }, { status: 400 })
     }

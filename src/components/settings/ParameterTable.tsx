@@ -13,12 +13,12 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { Add, Search, Edit, Delete, Check, Close } from '@mui/icons-material'
 
 interface ParameterTableProps {
-  data: any[]
+  data: Record<string, unknown>[]
   columns: GridColDef[]
   loading: boolean
   onAdd: () => void
-  onEdit: (row: any) => void
-  onDelete: (row: any) => void
+  onEdit: (row: Record<string, unknown>) => void
+  onDelete: (row: Record<string, unknown>) => void
   title: string
   searchPlaceholder?: string
 }

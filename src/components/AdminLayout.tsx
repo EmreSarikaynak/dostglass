@@ -48,6 +48,7 @@ const menuItems = [
   { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
   { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
   { text: 'Poliçeler', icon: <Description />, path: '/admin/policies' },
+  { text: 'Parametreler', icon: <Settings />, path: '/admin/settings-params' },
 ]
 
 export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProps) {
