@@ -10,7 +10,8 @@
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:vehicles": "tsx scripts/seed-complete-vehicles.ts",
     "seed:commercial": "tsx scripts/seed-commercial-vehicles.ts",
-    "seed:all-vehicles": "npm run seed:vehicles && npm run seed:commercial"
+    "seed:remaining": "tsx scripts/seed-remaining-categories.ts",
+    "seed:all-vehicles": "npm run seed:vehicles && npm run seed:commercial && npm run seed:remaining"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

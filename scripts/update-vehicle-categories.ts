@@ -101,7 +101,7 @@ async function main() {
         .from('vehicle_brands')
         .update({ category_id: newCategoryIds['BİNEK'] })
         .eq('category_id', oldBinek.id)
-        .select('*', { count: 'exact', head: true })
+        .select('*', { count: 'exact' })
 
       console.log(`  ✅ Binek Araç → BİNEK: ${count} marka taşındı`)
     }

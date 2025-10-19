@@ -180,7 +180,7 @@ export function SettingsClient() {
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null)
   const [deletingItem, setDeletingItem] = useState<Record<string, unknown> | null>(null)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
-  const [relatedData, setRelatedData] = useState<Record<string, Record<string, unknown>[]>>({})
+  const [relatedData] = useState<Record<string, Record<string, unknown>[]>>({})
 
   const tables = Object.keys(parameterConfigs)
   const currentTableKey = tables[tabValue]

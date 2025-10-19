@@ -6,6 +6,7 @@ Next.js (App Router, TypeScript) + Material UI + Supabase ile geliştirilmiş pr
 
 - **Next.js 15** App Router ile modern React yapısı
 - **Material UI (MUI)** ile profesyonel ve responsive arayüz
+- **🌙 Dark Mode** - Otomatik sistem tercihi algılama ve manuel toggle
 - **Supabase** ile güvenli kimlik doğrulama ve veritabanı
 - **TypeScript** ile tip güvenli kod
 - **Role-based Access Control (RBAC)** - Admin ve Bayi rolleri
@@ -92,9 +93,6 @@ Bu komut şu kullanıcıyı oluşturur:
 
 Kapsamlı binek araç veritabanını (38 marka, 535 model) yüklemek için:
 
-```bash
-npm run seed:vehicles
-```
 
 **Eklenen Markalar:**
 - Premium: Audi (44), BMW (66), Mercedes-Benz (87)
@@ -111,9 +109,6 @@ npm run seed:vehicles
 
 Kapsamlı ticari araç veritabanını (20 marka, 172 model) yüklemek için:
 
-```bash
-npm run seed:commercial
-```
 
 **Eklenen Markalar:**
 - Hafif Ticari: Ford Transit, VW Caddy, Fiat Doblo, Renault Kangoo

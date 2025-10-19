@@ -33,9 +33,12 @@ import {
   ExpandLess,
   ExpandMore,
   Tune,
+  Brightness4,
+  Brightness7,
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseClient'
+import { useColorMode } from '@/app/providers'
 
 const drawerWidth = 280
 
@@ -63,10 +66,11 @@ const settingsSubMenu = [
 export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { mode, toggleColorMode } = useColorMode()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [settingsOpen, setSettingsOpen] = useState(
-    pathname.startsWith('/admin/settings')
+    pathname.startsWith('/admin/settings') || pathname.startsWith('/admin/vehicle-management')
   )
 
   const handleDrawerToggle = () => {
@@ -91,29 +95,53 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
   const drawer = (
     <Box>
       {/* Logo ve Başlık */}
-      <Box sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
+      <Box 
+        sx={{ 
+          p: 3, 
+          textAlign: 'center', 
+          background: mode === 'dark' 
+            ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' 
+            : 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+          color: 'white',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        }}
+      >
         <Box
           sx={{
-            width: 50,
-            height: 50,
-            borderRadius: '50%',
-            bgcolor: 'white',
+            width: 60,
+            height: 60,
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)',
             mx: 'auto',
-            mb: 1,
+            mb: 1.5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            overflow: 'hidden',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            transition: 'transform 0.2s',
+            '&:hover': {
+              transform: 'scale(1.05)',
+            },
           }}
         >
-          <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              color: 'primary.main', 
+              fontWeight: 'bold',
+              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             DG
           </Typography>
         </Box>
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
           DostGlass
         </Typography>
-        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+        <Typography variant="caption" sx={{ fontSize: '0.75rem', opacity: 0.9 }}>
           Cam Sigorta Yönetimi
         </Typography>
       </Box>
@@ -227,16 +255,16 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
   )
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* AppBar */}
       <AppBar
         position="fixed"
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
           color: 'text.primary',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+          boxShadow: 1,
         }}
       >
         <Toolbar>
@@ -255,8 +283,13 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
              (pathname.startsWith('/admin/settings') ? 'Ayarlar' : 'Dashboard')}
           </Typography>
 
-          {/* Kullanıcı Menüsü */}
-          <Stack direction="row" spacing={2} alignItems="center">
+          {/* Koyu Mod Toggle ve Kullanıcı Menüsü */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            {/* Dark Mode Toggle */}
+            <IconButton onClick={toggleColorMode} color="inherit" sx={{ mr: 1 }}>
+              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+
             <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'right' }}>
               <Typography variant="body2" fontWeight={600}>
                 {tenantName}
