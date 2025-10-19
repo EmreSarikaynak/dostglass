@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { Providers } from './providers'
+import 'react-quill/dist/quill.snow.css'
 
 export const metadata: Metadata = {
-  title: 'DostGlass - Kurumsal Portal',
-  description: 'DostGlass Kurumsal Yönetim Paneli',
+  title: 'DostGlass - Cam Sigorta Yönetimi',
+  description: 'Kurumsal cam sigorta yönetim sistemi',
 }
 
 export default function RootLayout({

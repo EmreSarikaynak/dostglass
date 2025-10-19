@@ -20,10 +20,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { tr } from 'date-fns/locale'
 import dynamic from 'next/dynamic'
 import { supabaseBrowser } from '@/lib/supabaseClient'
-import 'react-quill/dist/quill.snow.css'
 
 // React Quill'i dynamically import et (SSR sorunları için)
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
+const ReactQuill = dynamic(() => import('react-quill'), { 
+  ssr: false,
+  loading: () => <Box sx={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Yükleniyor...</Box>
+})
 
 interface AnnouncementModalProps {
   open: boolean
