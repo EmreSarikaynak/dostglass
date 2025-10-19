@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getUserAndRole } from '@/lib/auth'
 import { AdminLayout } from '@/components/AdminLayout'
 import { UserListClient } from './UserListClient'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 export default async function UsersListPage() {
   const user = await getUserAndRole()
@@ -11,10 +11,10 @@ export default async function UsersListPage() {
     redirect('/')
   }
 
-  // Kullanıcıları getir
-  const supabase = await supabaseServer()
+  // Kullanıcıları getir (SERVICE ROLE ile)
+  const supabaseAdmin = getSupabaseAdmin()
   
-  const { data: userTenants } = await supabase
+  const { data: userTenants } = await supabaseAdmin
     .from('user_tenants')
     .select(`
       user_id,
@@ -26,13 +26,11 @@ export default async function UsersListPage() {
     .order('role', { ascending: true })
 
   // Auth users'dan email bilgilerini alalım
-  const userIds = userTenants?.map((ut) => ut.user_id) || []
-  
   const users = []
-  if (userIds.length > 0) {
+  if (userTenants && userTenants.length > 0) {
     // Her kullanıcı için auth.users'dan bilgi al
-    for (const ut of userTenants || []) {
-      const { data: authUser } = await supabase.auth.admin.getUserById(ut.user_id)
+    for (const ut of userTenants) {
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(ut.user_id)
       if (authUser.user) {
         const tenant = ut.tenants as unknown as { name: string } | null
         users.push({
