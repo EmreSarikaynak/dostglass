@@ -33,19 +33,51 @@ export async function GET(
       query = supabase.from(table).select('*, cities(name)').order('created_at', { ascending: false })
     }
     
-    // Alt markalar için marka bilgisini getir
+    // Araç markaları için kategori bilgisini getir
+    if (table === 'vehicle_brands') {
+      query = supabase.from(table).select('*, vehicle_categories(name)').order('created_at', { ascending: false })
+    }
+    
+    // Araç modelleri için marka ve kategori bilgisini getir
     if (table === 'vehicle_models') {
-      query = supabase.from(table).select('*, vehicle_brands(name)').order('created_at', { ascending: false })
+      query = supabase.from(table).select('*, vehicle_brands(name, vehicle_categories(name))').order('created_at', { ascending: false })
     }
 
     const { data, error } = await query
-
+    
     if (error) {
       console.error('Veri getirme hatası:', error)
       return NextResponse.json({ error: 'Veriler getirilemedi' }, { status: 500 })
     }
 
-    return NextResponse.json({ data })
+    // İlişkisel verileri düzleştir (flatten)
+    let processedData = data
+    
+    if (table === 'vehicle_brands' && data) {
+      processedData = data.map((item: Record<string, unknown>) => {
+        const category = item.vehicle_categories as Record<string, unknown> | null
+        return {
+          ...item,
+          category_name: category?.name || '-',
+          vehicle_categories: undefined, // nested object'i kaldır
+        }
+      })
+    }
+    
+    if (table === 'vehicle_models' && data) {
+      processedData = data.map((item: Record<string, unknown>) => {
+        const brand = item.vehicle_brands as Record<string, unknown> | null
+        const category = brand?.vehicle_categories as Record<string, unknown> | null
+        return {
+          ...item,
+          brand_name: brand?.name || '-',
+          category_name: category?.name || '-',
+          vehicle_brands: undefined, // nested object'i kaldır
+        }
+      })
+    }
+
+    return NextResponse.json({ data: processedData })
   } catch (error) {
     console.error('API hatası:', error)
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })

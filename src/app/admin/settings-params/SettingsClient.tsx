@@ -108,9 +108,24 @@ const parameterConfigs = {
     title: 'Araç Markaları',
     columns: [
       { field: 'name', headerName: 'Marka', flex: 1 },
+      { field: 'category_name', headerName: 'Kategori', width: 180 },
     ] as GridColDef[],
     fields: [
-      { name: 'name', label: 'Marka', type: 'text', required: true },
+      { name: 'name', label: 'Marka Adı', type: 'text', required: true },
+      { name: 'category_id', label: 'Kategori', type: 'select', required: true, relatedTable: 'vehicle_categories', relatedLabelKey: 'name' },
+      { name: 'is_active', label: 'Aktif', type: 'switch' },
+    ] as FieldConfig[],
+  },
+  vehicle_models: {
+    title: 'Araç Modelleri',
+    columns: [
+      { field: 'name', headerName: 'Model', flex: 1 },
+      { field: 'brand_name', headerName: 'Marka', width: 180 },
+      { field: 'category_name', headerName: 'Kategori', width: 150 },
+    ] as GridColDef[],
+    fields: [
+      { name: 'name', label: 'Model Adı', type: 'text', required: true },
+      { name: 'brand_id', label: 'Marka', type: 'select', required: true, relatedTable: 'vehicle_brands', relatedLabelKey: 'name' },
       { name: 'is_active', label: 'Aktif', type: 'switch' },
     ] as FieldConfig[],
   },
@@ -200,10 +215,31 @@ export function SettingsClient() {
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null)
   const [deletingItem, setDeletingItem] = useState<Record<string, unknown> | null>(null)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
+  const [relatedData, setRelatedData] = useState<Record<string, Record<string, unknown>[]>>({})
 
   const tables = Object.keys(parameterConfigs)
   const currentTableKey = tables[tabValue]
   const config = parameterConfigs[currentTableKey as keyof typeof parameterConfigs]
+
+  // İlişkisel verileri yükle
+  const loadRelatedData = async () => {
+    try {
+      // Kategorileri yükle (marka formu için)
+      const categoriesRes = await fetch('/api/parameters/vehicle_categories')
+      const categoriesData = await categoriesRes.json()
+      
+      // Markaları yükle (model formu için)
+      const brandsRes = await fetch('/api/parameters/vehicle_brands')
+      const brandsData = await brandsRes.json()
+      
+      setRelatedData({
+        vehicle_categories: categoriesData.data || [],
+        vehicle_brands: brandsData.data || [],
+      })
+    } catch (error) {
+      console.error('İlişkisel veri yükleme hatası:', error)
+    }
+  }
 
   // Veri yükleme
   const loadData = async (table: string) => {
@@ -219,6 +255,11 @@ export function SettingsClient() {
       setLoading(prev => ({ ...prev, [table]: false }))
     }
   }
+
+  useEffect(() => {
+    // İlişkisel verileri bir kez yükle
+    loadRelatedData()
+  }, [])
 
   useEffect(() => {
     if (currentTableKey) {
@@ -355,6 +396,7 @@ export function SettingsClient() {
         initialData={editingItem || undefined}
         fields={config.fields}
         title={editingItem ? `${config.title} Düzenle` : `Yeni ${config.title} Ekle`}
+        relatedData={relatedData}
       />
 
       <DeleteConfirmDialog
