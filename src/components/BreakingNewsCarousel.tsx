@@ -96,8 +96,8 @@ export function BreakingNewsCarousel() {
         sx={{
           mb: 3,
           background: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'
-            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            ? 'linear-gradient(135deg, #0C0B1B 0%, #002C51 50%, #002C50 100%)'
+            : 'linear-gradient(135deg, #002C50 0%, #025691 50%, #002C51 100%)',
           color: 'white',
           position: 'relative',
           overflow: 'hidden',
@@ -156,9 +156,9 @@ export function BreakingNewsCarousel() {
                 }}
                 sx={{
                   color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.2)',
+                  bgcolor: 'rgba(139,146,156,0.3)',
                   '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.3)',
+                    bgcolor: 'rgba(2,86,145,0.6)',
                   },
                 }}
               >
@@ -172,9 +172,9 @@ export function BreakingNewsCarousel() {
                 }}
                 sx={{
                   color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.2)',
+                  bgcolor: 'rgba(139,146,156,0.3)',
                   '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.3)',
+                    bgcolor: 'rgba(2,86,145,0.6)',
                   },
                 }}
               >
@@ -193,7 +193,7 @@ export function BreakingNewsCarousel() {
             sx={{
               color: 'white',
               '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.2)',
+                bgcolor: 'rgba(139,146,156,0.3)',
               },
             }}
           >
@@ -209,7 +209,7 @@ export function BreakingNewsCarousel() {
             left: 0,
             right: 0,
             height: '4px',
-            background: 'linear-gradient(90deg, #ffd89b 0%, #19547b 100%)',
+            background: 'linear-gradient(90deg, #025691 0%, #8B929C 50%, #025691 100%)',
             animation: 'shimmer 3s infinite',
             '@keyframes shimmer': {
               '0%': { backgroundPosition: '-200% 0' },
