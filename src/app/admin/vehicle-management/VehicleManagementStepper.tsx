@@ -25,8 +25,11 @@ import {
   Category as CategoryIcon,
   DirectionsCar,
   CarRepair,
+  ToggleOn,
+  ToggleOff,
 } from '@mui/icons-material'
 import { AddModelModal } from './AddModelModal'
+import { AddBrandModal } from './AddBrandModal'
 
 const steps = ['Kategori Seç', 'Marka Seç', 'Model Yönet']
 
@@ -67,7 +70,8 @@ export function VehicleManagementStepper() {
   // Loading
   const [loading, setLoading] = useState(false)
   
-  // Modal
+  // Modals
+  const [addBrandModalOpen, setAddBrandModalOpen] = useState(false)
   const [addModelModalOpen, setAddModelModalOpen] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
 
@@ -153,6 +157,34 @@ export function VehicleManagementStepper() {
     handleNext()
   }
 
+  const handleAddBrand = async (brandName: string) => {
+    if (!selectedCategory) return
+
+    try {
+      const response = await fetch('/api/parameters/vehicle_brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: brandName,
+          category_id: selectedCategory.id,
+          is_active: true,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Marka eklenemedi')
+      }
+
+      // Başarılı - markaları yeniden yükle
+      await loadBrands(selectedCategory.id)
+      setSnackbar({ open: true, message: `${brandName} markası başarıyla eklendi!`, severity: 'success' })
+    } catch (error) {
+      console.error('Marka ekleme hatası:', error)
+      throw error
+    }
+  }
+
   const handleAddModel = async (modelName: string) => {
     if (!selectedBrand) return
 
@@ -181,6 +213,39 @@ export function VehicleManagementStepper() {
     }
   }
 
+  const handleToggleActive = async (table: 'vehicle_categories' | 'vehicle_brands' | 'vehicle_models', id: string, currentStatus: boolean, name: string) => {
+    try {
+      const response = await fetch(`/api/parameters/${table}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          is_active: !currentStatus,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Durum güncellenemedi')
+      }
+
+      // Yeniden yükle
+      if (table === 'vehicle_categories') {
+        await loadCategories()
+      } else if (table === 'vehicle_brands' && selectedCategory) {
+        await loadBrands(selectedCategory.id)
+      } else if (table === 'vehicle_models' && selectedBrand) {
+        await loadModels(selectedBrand.id)
+      }
+
+      const status = !currentStatus ? 'Aktif' : 'Pasif'
+      setSnackbar({ open: true, message: `${name} ${status} yapıldı!`, severity: 'success' })
+    } catch (error) {
+      console.error('Durum güncelleme hatası:', error)
+      setSnackbar({ open: true, message: 'Durum güncellenemedi', severity: 'error' })
+    }
+  }
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
@@ -202,17 +267,33 @@ export function VehicleManagementStepper() {
                     '&:hover': { boxShadow: 4 },
                     border: '2px solid',
                     borderColor: selectedCategory?.id === category.id ? 'primary.main' : 'transparent',
+                    position: 'relative',
                   }}
                   onClick={() => handleCategorySelect(category)}
                 >
                   <CardContent>
-                    <Typography variant="h6">{category.name}</Typography>
-                    <Chip
-                      label={category.is_active ? 'Aktif' : 'Pasif'}
-                      color={category.is_active ? 'success' : 'default'}
-                      size="small"
-                      sx={{ mt: 1 }}
-                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6">{category.name}</Typography>
+                        <Chip
+                          label={category.is_active ? 'Aktif' : 'Pasif'}
+                          color={category.is_active ? 'success' : 'default'}
+                          size="small"
+                          sx={{ mt: 1 }}
+                        />
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleActive('vehicle_categories', category.id, category.is_active, category.name)
+                        }}
+                        color={category.is_active ? 'success' : 'default'}
+                        sx={{ ml: 1 }}
+                      >
+                        {category.is_active ? <ToggleOn /> : <ToggleOff />}
+                      </IconButton>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}
@@ -240,12 +321,23 @@ export function VehicleManagementStepper() {
               />
             </Box>
 
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DirectionsCar /> Araç Markası Seçin
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {selectedCategory?.name} kategorisindeki markaları görebilirsiniz
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <DirectionsCar /> Araç Markası Seçin
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedCategory?.name} kategorisindeki markaları görebilirsiniz
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setAddBrandModalOpen(true)}
+              >
+                Yeni Marka Ekle
+              </Button>
+            </Box>
             
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2 }}>
               {brands.map((brand) => (
@@ -256,17 +348,33 @@ export function VehicleManagementStepper() {
                     '&:hover': { boxShadow: 4 },
                     border: '2px solid',
                     borderColor: selectedBrand?.id === brand.id ? 'primary.main' : 'transparent',
+                    position: 'relative',
                   }}
                   onClick={() => handleBrandSelect(brand)}
                 >
                   <CardContent>
-                    <Typography variant="h6">{brand.name}</Typography>
-                    <Chip
-                      label={brand.is_active ? 'Aktif' : 'Pasif'}
-                      color={brand.is_active ? 'success' : 'default'}
-                      size="small"
-                      sx={{ mt: 1 }}
-                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6">{brand.name}</Typography>
+                        <Chip
+                          label={brand.is_active ? 'Aktif' : 'Pasif'}
+                          color={brand.is_active ? 'success' : 'default'}
+                          size="small"
+                          sx={{ mt: 1 }}
+                        />
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleActive('vehicle_brands', brand.id, brand.is_active, brand.name)
+                        }}
+                        color={brand.is_active ? 'success' : 'default'}
+                        sx={{ ml: 1 }}
+                      >
+                        {brand.is_active ? <ToggleOn /> : <ToggleOff />}
+                      </IconButton>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}
@@ -274,7 +382,7 @@ export function VehicleManagementStepper() {
 
             {brands.length === 0 && !loading && (
               <Alert severity="info" sx={{ mt: 2 }}>
-                Bu kategoride henüz marka yok. Parametreler sayfasından marka ekleyebilirsiniz.
+                Bu kategoride henüz marka yok. Yukarıdaki &quot;Yeni Marka Ekle&quot; butonunu kullanarak marka ekleyebilirsiniz.
               </Alert>
             )}
           </Box>
@@ -321,7 +429,7 @@ export function VehicleManagementStepper() {
                 <Card key={model.id}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
+                      <Box sx={{ flex: 1 }}>
                         <Typography variant="h6">{model.name}</Typography>
                         <Chip
                           label={model.is_active ? 'Aktif' : 'Pasif'}
@@ -330,14 +438,24 @@ export function VehicleManagementStepper() {
                           sx={{ mt: 1 }}
                         />
                       </Box>
-                      <Box>
+                      <Stack direction="row" spacing={0.5}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleToggleActive('vehicle_models', model.id, model.is_active, model.name)
+                          }}
+                          color={model.is_active ? 'success' : 'default'}
+                        >
+                          {model.is_active ? <ToggleOn /> : <ToggleOff />}
+                        </IconButton>
                         <IconButton size="small" color="primary">
                           <Edit fontSize="small" />
                         </IconButton>
                         <IconButton size="small" color="error">
                           <Delete fontSize="small" />
                         </IconButton>
-                      </Box>
+                      </Stack>
                     </Box>
                   </CardContent>
                 </Card>
@@ -401,6 +519,14 @@ export function VehicleManagementStepper() {
           )}
         </Box>
       </Paper>
+
+      {/* Add Brand Modal */}
+      <AddBrandModal
+        open={addBrandModalOpen}
+        onClose={() => setAddBrandModalOpen(false)}
+        onSave={handleAddBrand}
+        categoryName={selectedCategory?.name || ''}
+      />
 
       {/* Add Model Modal */}
       <AddModelModal
