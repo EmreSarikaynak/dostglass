@@ -86,7 +86,58 @@ Bu komut şu kullanıcıyı oluşturur:
 
 ⚠️ **Önemli:** Production'da bu şifreyi mutlaka değiştirin!
 
-### 6. Geliştirme Sunucusunu Başlatın
+### 6. Araç Veritabanını Doldurun (Opsiyonel)
+
+#### 🚗 Binek Araç Veritabanı
+
+Kapsamlı binek araç veritabanını (38 marka, 535 model) yüklemek için:
+
+```bash
+npm run seed:vehicles
+```
+
+**Eklenen Markalar:**
+- Premium: Audi (44), BMW (66), Mercedes-Benz (87)
+- Lüks: Porsche (14), Lexus (10), Tesla (4), Jaguar (7)
+- Japon: Toyota (21), Honda (8), Nissan (8), Mazda (12)
+- Kore: Hyundai (16), Kia (13), Genesis (6)
+- Alman: Volkswagen (26), Opel (12)
+- Fransız: Renault (14), Peugeot (10), Citroën (7)
+- Amerikan: Ford (16), Chevrolet (6), Jeep (7)
+- İtalyan: Fiat (12), Alfa Romeo (6)
+- Ve daha fazlası...
+
+#### 🚚 Ticari Araç Veritabanı
+
+Kapsamlı ticari araç veritabanını (20 marka, 172 model) yüklemek için:
+
+```bash
+npm run seed:commercial
+```
+
+**Eklenen Markalar:**
+- Hafif Ticari: Ford Transit, VW Caddy, Fiat Doblo, Renault Kangoo
+- Orta Ticari: Mercedes Sprinter, VW Crafter, Fiat Ducato, Renault Master
+- Pickup: Ford Ranger, Toyota Hilux, Nissan Navara, Isuzu D-Max, Mitsubishi L200
+- Kamyon: Iveco (26), MAN (22), Scania (23), DAF (12), Mercedes, Volvo
+- Otobüs: Temsa (9), Otokar (8), Karsan (5), BMC (6)
+- Çin Markaları: Maxus (13), DFSK (8), Changan, Great Wall, JAC, Foton
+- Amerikan: Dodge Ram, Chevrolet, GMC
+
+#### 🎯 Tüm Araçları Yükle
+
+Her iki kategoriyi birden yüklemek için:
+
+```bash
+npm run seed:all-vehicles
+```
+
+**Toplam:**
+- **~58 Marka** (bazı markalar her iki kategoride)
+- **~707 Model** (Binek: 535, Ticari: 172)
+- ✅ Scriptler idempotent'tir (tekrar çalıştırılabilir, duplicate oluşturmaz)
+
+### 7. Geliştirme Sunucusunu Başlatın
 
 ```bash
 npm run dev
