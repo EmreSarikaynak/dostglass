@@ -94,41 +94,6 @@ const parameterConfigs = {
       { name: 'is_active', label: 'Aktif', type: 'switch' },
     ] as FieldConfig[],
   },
-  vehicle_categories: {
-    title: 'Araç Kategorileri',
-    columns: [
-      { field: 'name', headerName: 'Kategori', flex: 1 },
-    ] as GridColDef[],
-    fields: [
-      { name: 'name', label: 'Kategori', type: 'text', required: true },
-      { name: 'is_active', label: 'Aktif', type: 'switch' },
-    ] as FieldConfig[],
-  },
-  vehicle_brands: {
-    title: 'Araç Markaları',
-    columns: [
-      { field: 'name', headerName: 'Marka', flex: 1 },
-      { field: 'category_name', headerName: 'Kategori', width: 180 },
-    ] as GridColDef[],
-    fields: [
-      { name: 'name', label: 'Marka Adı', type: 'text', required: true },
-      { name: 'category_id', label: 'Kategori', type: 'select', required: true, relatedTable: 'vehicle_categories', relatedLabelKey: 'name' },
-      { name: 'is_active', label: 'Aktif', type: 'switch' },
-    ] as FieldConfig[],
-  },
-  vehicle_models: {
-    title: 'Araç Modelleri',
-    columns: [
-      { field: 'name', headerName: 'Model', flex: 1 },
-      { field: 'brand_name', headerName: 'Marka', width: 180 },
-      { field: 'category_name', headerName: 'Kategori', width: 150 },
-    ] as GridColDef[],
-    fields: [
-      { name: 'name', label: 'Model Adı', type: 'text', required: true },
-      { name: 'brand_id', label: 'Marka', type: 'select', required: true, relatedTable: 'vehicle_brands', relatedLabelKey: 'name' },
-      { name: 'is_active', label: 'Aktif', type: 'switch' },
-    ] as FieldConfig[],
-  },
   glass_brands: {
     title: 'Cam Markaları',
     columns: [
@@ -221,24 +186,9 @@ export function SettingsClient() {
   const currentTableKey = tables[tabValue]
   const config = parameterConfigs[currentTableKey as keyof typeof parameterConfigs]
 
-  // İlişkisel verileri yükle
+  // İlişkisel verileri yükle (artık gerek yok, araç yönetimi ayrı sayfada)
   const loadRelatedData = async () => {
-    try {
-      // Kategorileri yükle (marka formu için)
-      const categoriesRes = await fetch('/api/parameters/vehicle_categories')
-      const categoriesData = await categoriesRes.json()
-      
-      // Markaları yükle (model formu için)
-      const brandsRes = await fetch('/api/parameters/vehicle_brands')
-      const brandsData = await brandsRes.json()
-      
-      setRelatedData({
-        vehicle_categories: categoriesData.data || [],
-        vehicle_brands: brandsData.data || [],
-      })
-    } catch (error) {
-      console.error('İlişkisel veri yükleme hatası:', error)
-    }
+    // Removed: vehicle data now managed in /admin/vehicle-management
   }
 
   // Veri yükleme

@@ -91,29 +91,31 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
   const drawer = (
     <Box>
       {/* Logo ve Başlık */}
-      <Box sx={{ p: 3, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
+      <Box sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
         <Box
           sx={{
-            width: 80,
-            height: 80,
+            width: 50,
+            height: 50,
             borderRadius: '50%',
             bgcolor: 'white',
             mx: 'auto',
-            mb: 2,
+            mb: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
           }}
         >
-          <Typography variant="h3" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+          <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
             DG
           </Typography>
         </Box>
-        <Typography variant="h6" fontWeight="bold">
+        <Typography variant="subtitle1" fontWeight="bold">
           DostGlass
         </Typography>
-        <Typography variant="caption">Cam Sigorta Yönetimi</Typography>
+        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+          Cam Sigorta Yönetimi
+        </Typography>
       </Box>
 
       <Divider />
