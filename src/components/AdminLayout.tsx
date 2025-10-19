@@ -18,6 +18,7 @@ import {
   Menu,
   MenuItem,
   Stack,
+  Collapse,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -29,6 +30,9 @@ import {
   Settings,
   Logout,
   AccountCircle,
+  ExpandLess,
+  ExpandMore,
+  Tune,
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseClient'
@@ -48,7 +52,11 @@ const menuItems = [
   { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
   { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
   { text: 'Poliçeler', icon: <Description />, path: '/admin/policies' },
-  { text: 'Parametreler', icon: <Settings />, path: '/admin/settings-params' },
+]
+
+const settingsSubMenu = [
+  { text: 'Genel Ayarlar', path: '/admin/settings' },
+  { text: 'Parametreler', path: '/admin/settings-params' },
 ]
 
 export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProps) {
@@ -56,6 +64,9 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [settingsOpen, setSettingsOpen] = useState(
+    pathname.startsWith('/admin/settings')
+  )
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -106,7 +117,7 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
 
       <Divider />
 
-      {/* Menü Items */}
+      {/* Ana Menü Items */}
       <List sx={{ px: 2, py: 2 }}>
         {menuItems.map((item) => {
           const isActive = pathname === item.path
@@ -137,20 +148,72 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
             </ListItem>
           )
         })}
-      </List>
 
-      <Divider sx={{ my: 2 }} />
-
-      {/* Ayarlar */}
-      <List sx={{ px: 2 }}>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => router.push('/admin/settings')} sx={{ borderRadius: 2 }}>
-            <ListItemIcon sx={{ minWidth: 40 }}>
+        {/* Ayarlar (Collapsible) */}
+        <ListItem disablePadding sx={{ mb: 0.5 }}>
+          <ListItemButton
+            onClick={() => setSettingsOpen(!settingsOpen)}
+            selected={pathname.startsWith('/admin/settings')}
+            sx={{
+              borderRadius: 2,
+              '&.Mui-selected': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+                '& .MuiListItemIcon-root': {
+                  color: 'white',
+                },
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: pathname.startsWith('/admin/settings') ? 'white' : 'inherit' }}>
               <Settings />
             </ListItemIcon>
             <ListItemText primary="Ayarlar" />
+            {settingsOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
         </ListItem>
+
+        {/* Ayarlar Alt Menüleri */}
+        <Collapse in={settingsOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {settingsSubMenu.map((subItem) => {
+              const isActive = pathname === subItem.path
+              return (
+                <ListItem key={subItem.text} disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    onClick={() => router.push(subItem.path)}
+                    selected={isActive}
+                    sx={{
+                      pl: 4,
+                      borderRadius: 2,
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                        fontWeight: 600,
+                        '&:hover': {
+                          bgcolor: 'primary.light',
+                        },
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <Tune sx={{ color: isActive ? 'primary.main' : 'text.secondary', fontSize: 20 }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={subItem.text}
+                      primaryTypographyProps={{
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              )
+            })}
+          </List>
+        </Collapse>
       </List>
     </Box>
   )
@@ -179,7 +242,9 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
           </IconButton>
 
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            {menuItems.find((item) => item.path === pathname)?.text || 'Dashboard'}
+            {menuItems.find((item) => item.path === pathname)?.text || 
+             settingsSubMenu.find((item) => item.path === pathname)?.text || 
+             (pathname.startsWith('/admin/settings') ? 'Ayarlar' : 'Dashboard')}
           </Typography>
 
           {/* Kullanıcı Menüsü */}
