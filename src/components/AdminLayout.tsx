@@ -35,10 +35,12 @@ import {
   Tune,
   Brightness4,
   Brightness7,
+  Campaign,
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseClient'
 import { useColorMode } from '@/app/providers'
+import { BreakingNewsCarousel } from './BreakingNewsCarousel'
 
 const drawerWidth = 280
 
@@ -51,6 +53,7 @@ interface AdminLayoutProps {
 const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
   { text: 'Kullanıcı Yönetimi', icon: <People />, path: '/admin/users' },
+  { text: 'Duyurular', icon: <Campaign />, path: '/announcements' },
   { text: 'Yeni İhbar', icon: <Assignment />, path: '/admin/claims/new' },
   { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
   { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
@@ -61,6 +64,7 @@ const settingsSubMenu = [
   { text: 'Genel Ayarlar', path: '/admin/settings' },
   { text: 'Parametreler', path: '/admin/settings-params' },
   { text: 'Araç Yönetimi', path: '/admin/vehicle-management' },
+  { text: 'Duyuru Yönetimi', path: '/admin/announcements' },
 ]
 
 export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProps) {
@@ -372,6 +376,9 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
         }}
       >
         <Box sx={{ flexGrow: 1, p: 3 }}>
+          {/* Breaking News Carousel */}
+          <BreakingNewsCarousel />
+          
           {children}
         </Box>
 
