@@ -26,6 +26,7 @@ import {
   DirectionsCar,
   CarRepair,
 } from '@mui/icons-material'
+import { AddModelModal } from './AddModelModal'
 
 const steps = ['Kategori Seç', 'Marka Seç', 'Model Yönet']
 
@@ -65,6 +66,10 @@ export function VehicleManagementStepper() {
   
   // Loading
   const [loading, setLoading] = useState(false)
+  
+  // Modal
+  const [addModelModalOpen, setAddModelModalOpen] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
 
   // Load categories
   useEffect(() => {
@@ -146,6 +151,34 @@ export function VehicleManagementStepper() {
   const handleBrandSelect = (brand: Brand) => {
     setSelectedBrand(brand)
     handleNext()
+  }
+
+  const handleAddModel = async (modelName: string) => {
+    if (!selectedBrand) return
+
+    try {
+      const response = await fetch('/api/parameters/vehicle_models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: modelName,
+          brand_id: selectedBrand.id,
+          is_active: true,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Model eklenemedi')
+      }
+
+      // Başarılı - modelleri yeniden yükle
+      await loadModels(selectedBrand.id)
+      setSnackbar({ open: true, message: `${modelName} modeli başarıyla eklendi!`, severity: 'success' })
+    } catch (error) {
+      console.error('Model ekleme hatası:', error)
+      throw error // Modal'da gösterilmesi için hatayı fırlat
+    }
   }
 
   const renderStepContent = () => {
@@ -277,10 +310,7 @@ export function VehicleManagementStepper() {
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                onClick={() => {
-                  // TODO: Modal açılacak
-                  alert('Yeni model ekleme modalı açılacak')
-                }}
+                onClick={() => setAddModelModalOpen(true)}
               >
                 Yeni Model Ekle
               </Button>
@@ -371,6 +401,31 @@ export function VehicleManagementStepper() {
           )}
         </Box>
       </Paper>
+
+      {/* Add Model Modal */}
+      <AddModelModal
+        open={addModelModalOpen}
+        onClose={() => setAddModelModalOpen(false)}
+        onSave={handleAddModel}
+        brandName={selectedBrand?.name || ''}
+        categoryName={selectedCategory?.name || ''}
+      />
+
+      {/* Success Snackbar */}
+      {snackbar.open && (
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 9999,
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      )}
     </Box>
   )
 }
