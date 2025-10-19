@@ -190,22 +190,27 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
                       pl: 4,
                       borderRadius: 2,
                       '&.Mui-selected': {
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
+                        bgcolor: 'rgba(25, 118, 210, 0.12)',
+                        color: 'primary.dark',
                         fontWeight: 600,
                         '&:hover': {
-                          bgcolor: 'primary.light',
+                          bgcolor: 'rgba(25, 118, 210, 0.2)',
                         },
+                      },
+                      '&:hover': {
+                        bgcolor: 'rgba(0, 0, 0, 0.04)',
                       },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 40 }}>
-                      <Tune sx={{ color: isActive ? 'primary.main' : 'text.secondary', fontSize: 20 }} />
+                      <Tune sx={{ color: isActive ? 'primary.dark' : 'text.secondary', fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText 
                       primary={subItem.text}
                       primaryTypographyProps={{
                         fontSize: '0.9rem',
+                        color: isActive ? 'primary.dark' : 'text.primary',
+                        fontWeight: isActive ? 600 : 400,
                       }}
                     />
                   </ListItemButton>
