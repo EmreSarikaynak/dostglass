@@ -57,6 +57,7 @@ const menuItems = [
 const settingsSubMenu = [
   { text: 'Genel Ayarlar', path: '/admin/settings' },
   { text: 'Parametreler', path: '/admin/settings-params' },
+  { text: 'Araç Yönetimi', path: '/admin/vehicle-management' },
 ]
 
 export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProps) {
