@@ -7,6 +7,7 @@ Next.js (App Router, TypeScript) + Material UI + Supabase ile geliştirilmiş pr
 - **Next.js 15** App Router ile modern React yapısı
 - **Material UI (MUI)** ile profesyonel ve responsive arayüz
 - **🌙 Dark Mode** - Otomatik sistem tercihi algılama ve manuel toggle
+- **📢 Duyuru Sistemi** - Zengin metin editörü ve breaking news carousel
 - **Supabase** ile güvenli kimlik doğrulama ve veritabanı
 - **TypeScript** ile tip güvenli kod
 - **Role-based Access Control (RBAC)** - Admin ve Bayi rolleri
