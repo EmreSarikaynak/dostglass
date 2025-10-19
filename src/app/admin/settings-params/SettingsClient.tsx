@@ -296,41 +296,57 @@ export function SettingsClient() {
   }
 
   return (
-    <Box>
-      <Paper sx={{ mb: 2 }}>
-        <Tabs
-          value={tabValue}
-          onChange={(_, newValue) => setTabValue(newValue)}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          {tables.map((table) => (
-            <Tab
-              key={table}
-              label={parameterConfigs[table as keyof typeof parameterConfigs].title}
-            />
-          ))}
-        </Tabs>
-      </Paper>
+    <>
+      <Box sx={{ display: 'flex', gap: 2, minHeight: '70vh' }}>
+        {/* Sol Taraf - Vertical Menü */}
+        <Paper sx={{ width: 280, flexShrink: 0, overflow: 'auto' }}>
+          <Tabs
+            orientation="vertical"
+            value={tabValue}
+            onChange={(_, newValue) => setTabValue(newValue)}
+            sx={{
+              borderRight: 1,
+              borderColor: 'divider',
+              '& .MuiTab-root': {
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                px: 3,
+                py: 2,
+                minHeight: 48,
+              },
+            }}
+          >
+            {tables.map((table) => (
+              <Tab
+                key={table}
+                label={parameterConfigs[table as keyof typeof parameterConfigs].title}
+              />
+            ))}
+          </Tabs>
+        </Paper>
 
-      {tables.map((table, index) => (
-        <TabPanel key={table} value={tabValue} index={index}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              {config.title}
-            </Typography>
-            <ParameterTable
-              data={data[table] || []}
-              columns={config.columns}
-              loading={loading[table] || false}
-              onAdd={handleAdd}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              title={config.title}
-            />
-          </Paper>
-        </TabPanel>
-      ))}
+        {/* Sağ Taraf - İçerik */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {tables.map((table, index) => (
+            <TabPanel key={table} value={tabValue} index={index}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h5" gutterBottom>
+                  {config.title}
+                </Typography>
+                <ParameterTable
+                  data={data[table] || []}
+                  columns={config.columns}
+                  loading={loading[table] || false}
+                  onAdd={handleAdd}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  title={config.title}
+                />
+              </Paper>
+            </TabPanel>
+          ))}
+        </Box>
+      </Box>
 
       <ParameterModal
         open={modalOpen}
@@ -362,7 +378,7 @@ export function SettingsClient() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   )
 }
 

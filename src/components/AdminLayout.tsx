@@ -259,12 +259,50 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
           width: { md: `calc(100% - ${drawerWidth}px)` },
           mt: 8,
         }}
       >
-        {children}
+        <Box sx={{ flexGrow: 1, p: 3 }}>
+          {children}
+        </Box>
+
+        {/* Footer */}
+        <Box
+          component="footer"
+          sx={{
+            py: 2,
+            px: 3,
+            mt: 'auto',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'light'
+                ? theme.palette.grey[200]
+                : theme.palette.grey[800],
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" align="center">
+            © 2025 •{' '}
+            <Box
+              component="a"
+              href="https://secesta.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              Secesta Lider Markaların Dijital Pazarlama & SEO Ajansı | Secesta Software Solutions®
+            </Box>
+          </Typography>
+        </Box>
       </Box>
     </Box>
   )
