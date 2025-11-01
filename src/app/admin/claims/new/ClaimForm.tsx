@@ -31,6 +31,51 @@ import {
 import { Add, Delete, Save, Search, ExpandMore, Phone } from '@mui/icons-material'
 import { ClaimFormData, ClaimItem, ParameterOption } from '@/types/claim'
 
+type VehicleCategoryInfo = {
+  id?: string
+  name?: string | null
+  [key: string]: unknown
+}
+
+type VehicleBrandInfo = {
+  id?: string
+  name?: string | null
+  category_id?: string | null
+  vehicle_categories?: VehicleCategoryInfo | null
+  [key: string]: unknown
+}
+
+type VehicleOption = {
+  id?: string
+  name?: string | null
+  brand_id?: string | null
+  brand_name?: string | null
+  category_name?: string | null
+  vehicle_brands?: VehicleBrandInfo | null
+  [key: string]: unknown
+}
+
+type GlassOption = {
+  id?: string | number | null
+  product_code?: string | null
+  stock_name?: string | null
+  glass_position_name?: string | null
+  glass_position_id?: string | null
+  glass_type_id?: string | null
+  glass_brand_id?: string | null
+  glass_color_id?: string | null
+  position_text?: string | null
+  features?: string | null
+  supplier?: string | null
+  price_colorless?: number | null
+  price_colored?: number | null
+  price_double_color?: number | null
+  has_camera?: boolean | null
+  has_sensor?: boolean | null
+  is_encapsulated?: boolean | null
+  [key: string]: unknown
+}
+
 interface ClaimFormProps {
   mode?: 'create' | 'edit'
   claimId?: string
@@ -124,11 +169,11 @@ export default function ClaimForm({
   const [loading, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' | 'warning' })
   const [glassSearchQuery, setGlassSearchQuery] = useState('')
-  const [allVehicles, setAllVehicles] = useState<Record<string, unknown>[]>([])
-  const [selectedVehicle, setSelectedVehicle] = useState<Record<string, unknown> | null>(null)
-  const [availableGlassPrices, setAvailableGlassPrices] = useState<Record<string, unknown>[]>([])
-  const [glassSearchOptions, setGlassSearchOptions] = useState<Record<string, unknown>[]>([]) // Autocomplete için
-  const [selectedGlass, setSelectedGlass] = useState<Record<string, unknown> | null>(null) // Araça uygun cam fiyatları
+  const [allVehicles, setAllVehicles] = useState<VehicleOption[]>([])
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null)
+  const [availableGlassPrices, setAvailableGlassPrices] = useState<GlassOption[]>([])
+  const [glassSearchOptions, setGlassSearchOptions] = useState<GlassOption[]>([]) // Autocomplete için
+  const [selectedGlass, setSelectedGlass] = useState<GlassOption | null>(null) // Araça uygun cam fiyatları
 
   // Parametrik verileri yükle
   useEffect(() => {
@@ -184,7 +229,8 @@ export default function ClaimForm({
         const data = await res.json()
         
         console.log('📦 Autocomplete bulunan cam sayısı:', data.data?.length || 0)
-        setGlassSearchOptions(data.data || [])
+        const options = (data.data || []) as GlassOption[]
+        setGlassSearchOptions(options)
       } catch (error) {
         console.error('❌ Autocomplete cam arama hatası:', error)
         setGlassSearchOptions([])
@@ -294,14 +340,14 @@ export default function ClaimForm({
       const data = await res.json()
       
       // Tüm araçları marka ve kategori bilgileriyle birlikte getir
-      const vehicles = data.data || []
+      const vehicles = (data.data || []) as VehicleOption[]
       setAllVehicles(vehicles)
     } catch (error) {
       console.error('Araç yükleme hatası:', error)
     }
   }
 
-  const handleVehicleSelect = async (vehicle: Record<string, unknown> | null) => {
+  const handleVehicleSelect = async (vehicle: VehicleOption | null) => {
     if (!vehicle) {
       setSelectedVehicle(null)
       setAvailableGlassPrices([]) // Camları temizle
@@ -312,19 +358,18 @@ export default function ClaimForm({
     setSelectedVehicle(vehicle)
     
     // Araç bilgilerini form alanlarına doldur
-    const vehicleRecord = vehicle as Record<string, unknown>
-    const brand = (vehicleRecord.vehicle_brands ?? null) as Record<string, unknown> | null
-    const categoryId = typeof brand?.['category_id'] === 'string'
-      ? (brand['category_id'] as string)
-      : typeof (brand?.['vehicle_categories'] as Record<string, unknown> | undefined)?.['id'] === 'string'
-        ? ((brand?.['vehicle_categories'] as Record<string, unknown>)?.['id'] as string)
+    const brand = vehicle.vehicle_brands ?? null
+    const categoryId = typeof brand?.category_id === 'string'
+      ? brand.category_id
+      : typeof brand?.vehicle_categories?.id === 'string'
+        ? brand.vehicle_categories?.id ?? null
         : null
-    const brandId = typeof vehicleRecord['brand_id'] === 'string'
-      ? (vehicleRecord['brand_id'] as string)
-      : typeof brand?.['id'] === 'string'
-        ? (brand['id'] as string)
+    const brandId = typeof vehicle.brand_id === 'string'
+      ? vehicle.brand_id
+      : typeof brand?.id === 'string'
+        ? brand.id
         : null
-    const vehicleId = typeof vehicleRecord['id'] === 'string' ? (vehicleRecord['id'] as string) : null
+    const vehicleId = typeof vehicle.id === 'string' ? vehicle.id : null
 
     console.log('Brand:', brand, 'CategoryId:', categoryId, 'BrandId:', brandId) // Debug
 
@@ -373,8 +418,12 @@ export default function ClaimForm({
         return
       }
 
-      const brandName = ((vehicle.vehicle_brands as Record<string, unknown>)?.name as string) || ''
-      const modelName = (vehicle.name as string) || ''
+      const brandName = String(
+        vehicle.vehicle_brands?.name ??
+        vehicle.brand_name ??
+        ''
+      )
+      const modelName = String(vehicle.name ?? '')
       
       // Marka adını sadeleştir: "Mercedes-Benz" → "MERCEDES", "BMW" → "BMW"
       const simplifiedBrand = brandName
@@ -401,7 +450,8 @@ export default function ClaimForm({
       console.log('📦 API Yanıtı:', data)
       console.log('🎯 Bulunan cam sayısı:', data.data?.length || 0)
       
-      setAvailableGlassPrices(data.data || [])
+      const fetchedGlass = (data.data || []) as GlassOption[]
+      setAvailableGlassPrices(fetchedGlass)
       
       if (data.data && data.data.length > 0) {
         showSnackbar(`✅ ${data.data.length} adet cam fiyatı bulundu`, 'success')
@@ -522,12 +572,13 @@ export default function ClaimForm({
       const data = await res.json()
       
       console.log('📦 Bulunan cam sayısı:', data.data?.length || 0)
-      setAvailableGlassPrices(data.data || [])
+      const results = (data.data || []) as GlassOption[]
+      setAvailableGlassPrices(results)
       
       // Sadece manuel aramada bildirim göster
       if (showNotification) {
-        if (data.data && data.data.length > 0) {
-          showSnackbar(`✅ ${data.data.length} adet cam bulundu`, 'success')
+        if (results.length > 0) {
+          showSnackbar(`✅ ${results.length} adet cam bulundu`, 'success')
         } else {
           showSnackbar('⚠️ Cam bulunamadı', 'warning')
         }
@@ -543,7 +594,7 @@ export default function ClaimForm({
   }
 
   // Autocomplete'ten cam seçimi
-  const handleGlassSelect = async (glass: Record<string, unknown> | null) => {
+  const handleGlassSelect = async (glass: GlassOption | null) => {
     setSelectedGlass(glass)
     
     if (!glass) return
@@ -897,11 +948,11 @@ export default function ClaimForm({
       glass_color_id: glassColorId,
     })
     
-    showSnackbar(`✅ ${glass.stock_name as string} - Bilgiler otomatik dolduruldu`, 'success')
+    showSnackbar(`✅ ${String(glass.stock_name ?? '')} - Bilgiler otomatik dolduruldu`, 'success')
   }
 
   // Cam fiyatından otomatik doldurma (Liste'den seçim)
-  const handleSelectGlassPrice = (glassPrice: Record<string, unknown>) => {
+  const handleSelectGlassPrice = (glassPrice: GlassOption) => {
     console.log('🎯 Liste\'den seçilen cam:', glassPrice)
     
     // Temel cam bilgileri
@@ -917,10 +968,10 @@ export default function ClaimForm({
     if (glassPrice.has_camera) notes += 'Kamera aparatlı '
     if (glassPrice.has_sensor) notes += 'Sensör aparatlı '
     if (glassPrice.is_encapsulated) notes += 'Enkapsül '
-    if (glassPrice.features) notes += glassPrice.features + ' '
+    if (glassPrice.features) notes += String(glassPrice.features) + ' '
     if (notes) handleItemChange('notes', notes.trim())
     
-    showSnackbar(`✅ ${glassPrice.stock_name as string} - Bilgiler otomatik dolduruldu`, 'success')
+    showSnackbar(`✅ ${String(glassPrice.stock_name ?? '')} - Bilgiler otomatik dolduruldu`, 'success')
   }
 
   const handleSubmit = async (status: 'draft' | 'submitted') => {
@@ -1403,18 +1454,18 @@ export default function ClaimForm({
           
           {/* Araç Hızlı Seçim - Autocomplete */}
           <Box sx={{ mb: 2 }}>
-            <Autocomplete
+            <Autocomplete<VehicleOption, false, false, false>
               fullWidth
               options={allVehicles}
               value={selectedVehicle}
-              onChange={(event, newValue) => handleVehicleSelect(newValue as Record<string, unknown> | null)}
+              onChange={(_event, newValue) => handleVehicleSelect(newValue)}
               filterOptions={(options, { inputValue }) => {
                 // Büyük-küçük harf duyarsız arama
                 const searchValue = inputValue.toLowerCase()
-                return options.filter((option: Record<string, unknown>) => {
-                  const brandName = ((option.brand_name as string) || (option.vehicle_brands as Record<string, unknown>)?.name as string || '').toLowerCase()
-                  const modelName = ((option.name as string) || '').toLowerCase()
-                  const categoryName = ((option.category_name as string) || ((option.vehicle_brands as Record<string, unknown>)?.vehicle_categories as Record<string, unknown>)?.name as string || '').toLowerCase()
+                return options.filter((option) => {
+                  const brandName = String(option.brand_name ?? option.vehicle_brands?.name ?? '').toLowerCase()
+                  const modelName = String(option.name ?? '').toLowerCase()
+                  const categoryName = String(option.category_name ?? option.vehicle_brands?.vehicle_categories?.name ?? '').toLowerCase()
                   
                   return brandName.includes(searchValue) || 
                          modelName.includes(searchValue) || 
@@ -1424,26 +1475,26 @@ export default function ClaimForm({
               getOptionLabel={(option) => {
                 if (!option) return ''
                 // Düzleştirilmiş verileri kullan
-                const brandName = option.brand_name || option.vehicle_brands?.name || 'Bilinmeyen'
-                const categoryName = option.category_name || option.vehicle_brands?.vehicle_categories?.name || ''
-                return `${brandName} - ${option.name} ${categoryName ? `(${categoryName})` : ''}`
+                const brandName = String(option.brand_name ?? option.vehicle_brands?.name ?? 'Bilinmeyen')
+                const categoryName = String(option.category_name ?? option.vehicle_brands?.vehicle_categories?.name ?? '')
+                const modelName = String(option.name ?? '')
+                return `${brandName} - ${modelName} ${categoryName ? `(${categoryName})` : ''}`
               }}
               renderOption={(props, option) => {
-                const { key, ...otherProps } = props as Record<string, unknown> & { key: string }
-                const brandName = option.brand_name || option.vehicle_brands?.name || 'Bilinmeyen Marka'
-                const categoryName = option.category_name || option.vehicle_brands?.vehicle_categories?.name || 'Bilinmeyen Kategori'
+                const brandName = String(option.brand_name ?? option.vehicle_brands?.name ?? 'Bilinmeyen Marka')
+                const categoryName = String(option.category_name ?? option.vehicle_brands?.vehicle_categories?.name ?? 'Bilinmeyen Kategori')
                 
                 return (
-                  <Box component="li" key={key} {...otherProps}>
+                  <li {...props}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body2" fontWeight={600}>
-                        {brandName} - {option.name}
+                        {brandName} - {String(option.name ?? '')}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {categoryName}
                       </Typography>
                     </Box>
-                  </Box>
+                  </li>
                 )
               }}
               renderInput={(params) => (
@@ -1620,12 +1671,12 @@ export default function ClaimForm({
           {/* Cam Sorgulama Alanı */}
           <Box sx={{ mb: 2 }}>
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Autocomplete
+              <Autocomplete<GlassOption, false, false, false>
                 fullWidth
                 options={glassSearchOptions}
                 value={selectedGlass}
                 onChange={(_, newValue) => {
-                  handleGlassSelect(newValue as Record<string, unknown> | null)
+                  handleGlassSelect(newValue)
                   // Seçim sonrası inputValue'yu temizle
                   if (newValue) {
                     setGlassSearchQuery('')
@@ -1647,32 +1698,33 @@ export default function ClaimForm({
                   }
                 }}
                 getOptionLabel={(option) => {
-                  const code = (option.product_code as string) || ''
-                  const name = (option.stock_name as string) || ''
+                  const code = String(option.product_code ?? '')
+                  const name = String(option.stock_name ?? '')
                   return `${code} - ${name}`
                 }}
                 filterOptions={(x) => x} // API'den geldiği için filtreleme yapma
                 loading={loading}
                 renderOption={(props, option) => {
-                  const { key, ...otherProps } = props as Record<string, unknown> & { key: string }
-                  const code = (option.product_code as string) || ''
-                  const name = (option.stock_name as string) || ''
-                  const position = (option.glass_position_name as string) || ''
-                  const price = (option.price_colorless as number) || 0
+                  const code = String(option.product_code ?? '')
+                  const name = String(option.stock_name ?? '')
+                  const position = String(option.glass_position_name ?? '')
+                  const price = Number(option.price_colorless ?? 0)
                   
                   return (
-                    <Box component="li" key={key} {...otherProps} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', py: 1, width: '100%' }}>
-                      <Typography variant="body2" fontWeight={600} sx={{ textAlign: 'right', width: '100%' }}>
-                        {code} - {name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', width: '100%' }}>
-                        {position} • {(Number(price) || 0).toFixed(2)} ₺
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, justifyContent: 'flex-end', width: '100%' }}>
-                        {option.has_camera && <Chip label="📷 Kamera" size="small" />}
-                        {option.has_sensor && <Chip label="📡 Sensör" size="small" />}
+                    <li {...props}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', py: 1, width: '100%' }}>
+                        <Typography variant="body2" fontWeight={600} sx={{ textAlign: 'right', width: '100%' }}>
+                          {code} - {name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', width: '100%' }}>
+                          {position} • {price.toFixed(2)} ₺
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, justifyContent: 'flex-end', width: '100%' }}>
+                          {option.has_camera && <Chip label="📷 Kamera" size="small" />}
+                          {option.has_sensor && <Chip label="📡 Sensör" size="small" />}
+                        </Box>
                       </Box>
-                    </Box>
+                    </li>
                   )
                 }}
                 renderInput={(params) => (
@@ -1704,50 +1756,53 @@ export default function ClaimForm({
                   🔍 {availableGlassPrices.length} Adet Cam Bulundu
                 </Typography>
                 <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-                  {availableGlassPrices.map((glass) => (
-                    <Paper
-                      key={glass.id}
-                      sx={{
-                        p: 1.5,
-                        mb: 1,
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: 'action.hover', boxShadow: 2 },
-                        transition: 'all 0.2s',
-                      }}
-                      onClick={() => handleSelectGlassPrice(glass)}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box flex={1}>
-                          <Typography variant="body2" fontWeight={600} color="primary">
-                            {glass.product_code} - {glass.stock_name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {glass.glass_position_name} • {glass.features || 'Standart'}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
-                            {glass.has_camera && <Chip label="📷 Kamera" size="small" color="info" />}
-                            {glass.has_sensor && <Chip label="📡 Sensör" size="small" color="info" />}
-                            {glass.is_encapsulated && <Chip label="📦 Enkapsül" size="small" color="secondary" />}
+                  {availableGlassPrices.map((glass, index) => {
+                    const glassKey = String(glass.id ?? glass.product_code ?? glass.stock_name ?? index)
+                    return (
+                      <Paper
+                        key={glassKey}
+                        sx={{
+                          p: 1.5,
+                          mb: 1,
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: 'action.hover', boxShadow: 2 },
+                          transition: 'all 0.2s',
+                        }}
+                        onClick={() => handleSelectGlassPrice(glass)}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <Box flex={1}>
+                            <Typography variant="body2" fontWeight={600} color="primary">
+                              {glass.product_code} - {glass.stock_name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {glass.glass_position_name} • {glass.features || 'Standart'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                              {glass.has_camera && <Chip label="📷 Kamera" size="small" color="info" />}
+                              {glass.has_sensor && <Chip label="📡 Sensör" size="small" color="info" />}
+                              {glass.is_encapsulated && <Chip label="📦 Enkapsül" size="small" color="secondary" />}
+                            </Box>
+                          </Box>
+                          <Box sx={{ ml: 2, textAlign: 'right', minWidth: 120 }}>
+                            <Typography variant="h6" color="success.main" fontWeight={700}>
+                              {(Number(glass.price_colorless) || 0).toFixed(2)} ₺
+                            </Typography>
+                            {(Number(glass.price_colored) || 0) > 0 && (
+                              <Typography variant="body2" color="warning.main" fontWeight={600}>
+                                Renkli: {(Number(glass.price_colored) || 0).toFixed(2)} ₺
+                              </Typography>
+                            )}
+                            {(Number(glass.price_double_color) || 0) > 0 && (
+                              <Typography variant="caption" color="text.secondary">
+                                Çift Renk: {(Number(glass.price_double_color) || 0).toFixed(2)} ₺
+                              </Typography>
+                            )}
                           </Box>
                         </Box>
-                        <Box sx={{ ml: 2, textAlign: 'right', minWidth: 120 }}>
-                          <Typography variant="h6" color="success.main" fontWeight={700}>
-                            {(Number(glass.price_colorless) || 0).toFixed(2)} ₺
-                          </Typography>
-                          {(Number(glass.price_colored) || 0) > 0 && (
-                            <Typography variant="body2" color="warning.main" fontWeight={600}>
-                              Renkli: {(Number(glass.price_colored) || 0).toFixed(2)} ₺
-                            </Typography>
-                          )}
-                          {(Number(glass.price_double_color) || 0) > 0 && (
-                            <Typography variant="caption" color="text.secondary">
-                              Çift Renk: {(Number(glass.price_double_color) || 0).toFixed(2)} ₺
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </Paper>
-                  ))}
+                      </Paper>
+                    )
+                  })}
                 </Box>
                 <Alert severity="info" sx={{ mt: 1 }}>
                   💡 Bir camı seçmek için üzerine tıklayın
@@ -2042,4 +2097,3 @@ export default function ClaimForm({
     </Box>
   )
 }
-
