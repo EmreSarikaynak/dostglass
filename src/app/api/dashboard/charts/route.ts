@@ -84,8 +84,9 @@ export async function GET(request: NextRequest) {
     if (insuranceError) throw insuranceError
 
     const insuranceMap: Record<string, number> = {}
-    insuranceData?.forEach((claim: { insurance_companies?: { name?: string } | null }) => {
-      const name = claim.insurance_companies?.name || 'Bilinmiyor'
+    insuranceData?.forEach((claim: { insurance_companies?: Array<{ name?: string }> | { name?: string } | null }) => {
+      const company = unwrapSingleRelation(claim.insurance_companies)
+      const name = company?.name || 'Bilinmiyor'
       insuranceMap[name] = (insuranceMap[name] || 0) + 1
     })
 
@@ -163,8 +164,9 @@ export async function GET(request: NextRequest) {
     if (vehicleBrandsError) throw vehicleBrandsError
 
     const brandMap: Record<string, number> = {}
-    vehicleBrandsData?.forEach((claim: { vehicle_brands?: { name?: string } | null }) => {
-      const name = claim.vehicle_brands?.name || 'Bilinmiyor'
+    vehicleBrandsData?.forEach((claim: { vehicle_brands?: Array<{ name?: string }> | { name?: string } | null }) => {
+      const brand = unwrapSingleRelation(claim.vehicle_brands)
+      const name = brand?.name || 'Bilinmiyor'
       brandMap[name] = (brandMap[name] || 0) + 1
     })
 
@@ -204,3 +206,10 @@ function formatMonth(date: Date): string {
   return `${months[date.getMonth()]} ${date.getFullYear()}`
 }
 
+function unwrapSingleRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value[0] ?? null : null
+  }
+  return value
+}

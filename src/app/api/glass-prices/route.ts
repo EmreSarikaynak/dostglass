@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       .insert({
         ...body,
         tenant_id: user.tenantId,
-        created_by: user.id,
+        created_by: user.userId,
       })
       .select()
       .single()
@@ -88,4 +88,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }
-

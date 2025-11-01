@@ -63,15 +63,33 @@ export function GlassPricesClient() {
     try {
       const res = await fetch('/api/glass-prices?detailed=true')
       const data = await res.json()
-      const allItems = data.data || []
+      const allItems = (data.data || []) as Array<Record<string, unknown>>
 
       // Benzersiz tedarikçiler
-      const uniqueSuppliers = [...new Set(allItems.map((item: any) => item.supplier).filter(Boolean))]
-      setSuppliers(uniqueSuppliers.sort())
+      const uniqueSuppliers = Array.from(
+        new Set(
+          allItems
+            .map(item => {
+              const supplier = item.supplier
+              return typeof supplier === 'string' ? supplier.trim() : ''
+            })
+            .filter((value): value is string => value.length > 0)
+        )
+      ).sort((a, b) => a.localeCompare(b))
+      setSuppliers(uniqueSuppliers)
 
       // Benzersiz kategoriler
-      const uniqueCategories = [...new Set(allItems.map((item: any) => item.category).filter(Boolean))]
-      setCategories(uniqueCategories.sort())
+      const uniqueCategories = Array.from(
+        new Set(
+          allItems
+            .map(item => {
+              const categoryValue = item.category
+              return typeof categoryValue === 'string' ? categoryValue.trim() : ''
+            })
+            .filter((value): value is string => value.length > 0)
+        )
+      ).sort((a, b) => a.localeCompare(b))
+      setCategories(uniqueCategories)
     } catch (error) {
       console.error('Tedarikçi/Kategori yükleme hatası:', error)
     }

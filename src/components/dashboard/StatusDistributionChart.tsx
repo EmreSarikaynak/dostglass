@@ -12,10 +12,13 @@ export function StatusDistributionChart({ data }: StatusDistributionChartProps) 
   const isDark = theme.palette.mode === 'dark'
   const RADIAN = Math.PI / 180
   const renderCustomizedLabel = (props: PieLabelRenderProps) => {
-    const toNumber = (value: number | string | undefined) => {
+    const toNumber = (value: unknown) => {
       if (typeof value === 'number') return value
-      const parsed = Number(value ?? 0)
-      return Number.isFinite(parsed) ? parsed : 0
+      if (typeof value === 'string') {
+        const parsed = Number(value)
+        return Number.isFinite(parsed) ? parsed : 0
+      }
+      return 0
     }
 
     const {

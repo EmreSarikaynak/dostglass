@@ -15,6 +15,7 @@ import {
   Typography,
   CircularProgress,
 } from '@mui/material'
+import type { ButtonProps, ChipProps } from '@mui/material'
 import {
   CheckCircle,
   PlayArrow,
@@ -29,12 +30,19 @@ interface ClaimStatusChangerProps {
   onStatusChanged: () => void
 }
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'info' | 'warning' | 'success' | 'error'; icon: React.ReactNode }> = {
-  draft: { label: 'Taslak', color: 'default', icon: <Edit fontSize="small" /> },
-  submitted: { label: 'Gönderildi', color: 'info', icon: <Send fontSize="small" /> },
-  in_progress: { label: 'İşlemde', color: 'warning', icon: <PlayArrow fontSize="small" /> },
-  completed: { label: 'Tamamlandı', color: 'success', icon: <CheckCircle fontSize="small" /> },
-  cancelled: { label: 'İptal Edildi', color: 'error', icon: <Cancel fontSize="small" /> },
+type StatusConfig = {
+  label: string
+  buttonColor: ButtonProps['color']
+  chipColor: ChipProps['color']
+  icon: React.ReactElement
+}
+
+const statusConfig: Record<string, StatusConfig> = {
+  draft: { label: 'Taslak', buttonColor: 'inherit', chipColor: 'default', icon: <Edit fontSize="small" /> },
+  submitted: { label: 'Gönderildi', buttonColor: 'info', chipColor: 'info', icon: <Send fontSize="small" /> },
+  in_progress: { label: 'İşlemde', buttonColor: 'warning', chipColor: 'warning', icon: <PlayArrow fontSize="small" /> },
+  completed: { label: 'Tamamlandı', buttonColor: 'success', chipColor: 'success', icon: <CheckCircle fontSize="small" /> },
+  cancelled: { label: 'İptal Edildi', buttonColor: 'error', chipColor: 'error', icon: <Cancel fontSize="small" /> },
 }
 
 const statusTransitions: Record<string, string[]> = {
@@ -53,6 +61,8 @@ export function ClaimStatusChanger({ claimId, currentStatus, onStatusChanged }: 
   const [error, setError] = useState<string | null>(null)
 
   const allowedStatuses = statusTransitions[currentStatus] || []
+  const currentConfig = statusConfig[currentStatus]
+  const selectedConfig = selectedStatus ? statusConfig[selectedStatus] : null
 
   const handleOpen = (status: string) => {
     setSelectedStatus(status)
@@ -116,7 +126,7 @@ export function ClaimStatusChanger({ claimId, currentStatus, onStatusChanged }: 
             <Button
               key={status}
               variant="outlined"
-              color={config.color}
+              color={config.buttonColor}
               startIcon={config.icon}
               onClick={() => handleOpen(status)}
               sx={{ fontWeight: 600 }}
@@ -144,9 +154,9 @@ export function ClaimStatusChanger({ claimId, currentStatus, onStatusChanged }: 
               Mevcut Durum
             </Typography>
             <Chip
-              label={statusConfig[currentStatus]?.label}
-              color={statusConfig[currentStatus]?.color}
-              icon={statusConfig[currentStatus]?.icon}
+              label={currentConfig?.label ?? currentStatus}
+              color={currentConfig?.chipColor ?? 'default'}
+              icon={currentConfig ? currentConfig.icon : undefined}
             />
           </Box>
 
@@ -155,9 +165,9 @@ export function ClaimStatusChanger({ claimId, currentStatus, onStatusChanged }: 
               Yeni Durum
             </Typography>
             <Chip
-              label={selectedStatus ? statusConfig[selectedStatus]?.label : ''}
-              color={selectedStatus ? statusConfig[selectedStatus]?.color : 'default'}
-              icon={selectedStatus ? statusConfig[selectedStatus]?.icon : undefined}
+              label={selectedConfig?.label ?? ''}
+              color={selectedConfig?.chipColor ?? 'default'}
+              icon={selectedConfig ? selectedConfig.icon : undefined}
               sx={{ fontWeight: 700, fontSize: '1rem', py: 2 }}
             />
           </Box>
@@ -190,4 +200,3 @@ export function ClaimStatusChanger({ claimId, currentStatus, onStatusChanged }: 
     </Box>
   )
 }
-

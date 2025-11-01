@@ -88,16 +88,17 @@ export async function PATCH(
     }
 
     // Durum değişikliği logu (opsiyonel)
-    await supabase.from('claim_status_history').insert({
+    const { error: historyError } = await supabase.from('claim_status_history').insert({
       claim_id: id,
       old_status: currentStatus,
       new_status: status,
       changed_by: user.userId,
       notes: notes || null,
-    }).catch(() => {
-      // Log hatası kritik değil
-      console.log('Status history log failed (table may not exist)')
     })
+
+    if (historyError) {
+      console.log('Status history log failed (table may not exist)', historyError)
+    }
 
     return NextResponse.json({ 
       success: true, 

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         .from('system_settings')
         .update({
           ...body,
-          updated_by: user.id,
+          updated_by: user.userId,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingSettings.id)
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         .from('system_settings')
         .insert({
           ...body,
-          updated_by: user.id,
+          updated_by: user.userId,
         })
         .select()
         .single()
@@ -115,4 +115,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

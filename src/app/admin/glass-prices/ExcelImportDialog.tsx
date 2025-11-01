@@ -287,7 +287,6 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
             
             if (foundBrand) {
               matchedBrand = foundBrand
-              vehicleInfo = brandCandidate
               break
             }
           }
@@ -339,7 +338,6 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
               
               if (targetBrand) {
                 matchedBrand = targetBrand
-                vehicleInfo = `${targetBrandName} ${firstWord}`
                 console.log(`🎯 Akıllı eşleştirme: "${firstWord}" → "${targetBrandName}"`)
               } else {
                 // Bilinmeyen kod - varsayılan olarak ALFA ROMEO
@@ -350,7 +348,6 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
                 
                 if (alfaBrand) {
                   matchedBrand = alfaBrand
-                  vehicleInfo = `ALFA ROMEO ${firstWord}`
                   console.log(`🔄 Bilinmeyen kod ALFA ROMEO'ya: "${firstWord}"`)
                 } else {
                   notFoundVehicles.add(`Bilinmeyen kod: ${firstWord}`)
@@ -392,7 +389,6 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
                   
                   if (brandInDb) {
                     matchedBrand = brandInDb
-                    vehicleInfo = `${brandName} ${firstWord}`
                     console.log(`🎯 Model eşleştirme: "${firstWord}" → "${brandName}"`)
                     foundByModel = true
                     break
@@ -897,4 +893,3 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
     </Dialog>
   )
 }
-

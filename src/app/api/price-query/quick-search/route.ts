@@ -75,11 +75,12 @@ export async function GET(request: NextRequest) {
         .order('name')
         .limit(5)
 
-      models?.forEach((item: { id: string; name: string; vehicle_brands: { name: string } }) => {
+      models?.forEach((item: { id: string; name: string; vehicle_brands?: Array<{ name?: string }> | { name?: string } | null }) => {
+        const brandName = unwrapRelation(item.vehicle_brands)?.name || ''
         suggestions.push({
           type: 'vehicle_model',
           value: item.name,
-          label: `Model: ${item.vehicle_brands.name} ${item.name}`,
+          label: `Model: ${brandName} ${item.name}`.trim(),
           id: item.id
         })
       })
@@ -117,3 +118,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
+function unwrapRelation<T extends { name?: string }>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value[0] ?? null : null
+  }
+  return value
+}

@@ -73,9 +73,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', fromDate.toISOString())
 
     const categoryCounts: Record<string, { name: string; count: number }> = {}
-    categoryLogs?.forEach((log: { vehicle_category_id: string; vehicle_categories: { name: string } | null }) => {
+    categoryLogs?.forEach((log: { vehicle_category_id: string; vehicle_categories?: Array<{ name?: string }> | { name?: string } | null }) => {
       const id = log.vehicle_category_id
-      const name = log.vehicle_categories?.name || 'Bilinmiyor'
+      const category = unwrapRelation(log.vehicle_categories)
+      const name = category?.name || 'Bilinmiyor'
       if (!categoryCounts[id]) {
         categoryCounts[id] = { name, count: 0 }
       }
@@ -138,3 +139,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
+function unwrapRelation<T extends { name?: string }>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value[0] ?? null : null
+  }
+  return value
+}

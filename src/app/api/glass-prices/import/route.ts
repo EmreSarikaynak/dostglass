@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       return {
         ...item,
         tenant_id: user.tenantId,
-        created_by: user.id,
+        created_by: user.userId,
         glass_position_id: position_id,
         glass_type_id: type_id,
         glass_brand_id: brand_id,
@@ -264,4 +264,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }
-
