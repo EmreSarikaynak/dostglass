@@ -18,7 +18,6 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material'
-import Grid from '@mui/material/Unstable_Grid2'
 import {
   ArrowBack as BackIcon,
   Edit as EditIcon,
@@ -234,9 +233,9 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
         />
       </Card>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
         {/* Sigorta & Poliçe Bilgileri */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Sigorta & Poliçe Bilgileri
@@ -250,10 +249,10 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <InfoRow label="Poliçe Bitiş" value={claim.policy_end_date ? new Date(claim.policy_end_date).toLocaleDateString('tr-TR') : '-'} />
             </Stack>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Hasar Bilgileri */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Hasar Bilgileri
@@ -265,10 +264,10 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <InfoRow label="Olay Yeri (İl/İlçe)" value="-" />
             </Stack>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Sigortalı Bilgileri */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Sigortalı Bilgileri
@@ -282,10 +281,10 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <InfoRow label="Cep Telefonu" value={claim.insured_mobile} />
             </Stack>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Sürücü Bilgileri */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Sürücü Bilgileri
@@ -302,10 +301,10 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <InfoRow label="Ehliyet No" value={claim.driver_license_number} />
             </Stack>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Araç Bilgileri */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Araç Bilgileri
@@ -319,11 +318,11 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <InfoRow label="Araç Modeli" value={claim.vehicle_models?.name} />
             </Stack>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Notlar */}
         {claim.notes && (
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Box>
             <Card sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 Notlar
@@ -332,11 +331,11 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
                 {claim.notes}
               </Typography>
             </Card>
-          </Grid>
+          </Box>
         )}
 
         {/* Cam Kalemleri */}
-        <Grid size={{ xs: 12 }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Cam Kalemleri
@@ -401,8 +400,8 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <Alert severity="info">Henüz cam kalemi eklenmemiş</Alert>
             )}
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   )
 }
