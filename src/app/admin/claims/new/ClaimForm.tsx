@@ -874,12 +874,12 @@ export default function ClaimForm({
     }
     
     // Temel cam bilgileri
-    handleItemChange('glass_position_id', glassPositionId as string)
-    handleItemChange('glass_type_id', glassTypeId as string)
-    handleItemChange('glass_brand_id', glassBrandId as string)
-    handleItemChange('glass_color_id', glassColorId as string)
-    handleItemChange('glass_code', String(glass.product_code || '') as string)
-    handleItemChange('unit_price', Number(glass.price_colorless || 0) as number)
+    handleItemChange('glass_position_id', glassPositionId)
+    handleItemChange('glass_type_id', glassTypeId)
+    handleItemChange('glass_brand_id', glassBrandId)
+    handleItemChange('glass_color_id', glassColorId)
+    handleItemChange('glass_code', String(glass.product_code || ''))
+    handleItemChange('unit_price', Number(glass.price_colorless || 0))
     
     // Özellikleri kontrol et ve notlara ekle
     let notes = ''
@@ -1666,7 +1666,7 @@ export default function ClaimForm({
                         {code} - {name}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', width: '100%' }}>
-                        {position} • {price.toFixed(2)} ₺
+                        {position} • {(Number(price) || 0).toFixed(2)} ₺
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, justifyContent: 'flex-end', width: '100%' }}>
                         {option.has_camera && <Chip label="📷 Kamera" size="small" />}
@@ -1732,16 +1732,16 @@ export default function ClaimForm({
                         </Box>
                         <Box sx={{ ml: 2, textAlign: 'right', minWidth: 120 }}>
                           <Typography variant="h6" color="success.main" fontWeight={700}>
-                            {(glass.price_colorless || 0).toFixed(2)} ₺
+                            {(Number(glass.price_colorless) || 0).toFixed(2)} ₺
                           </Typography>
-                          {(glass.price_colored || 0) > 0 && (
+                          {(Number(glass.price_colored) || 0) > 0 && (
                             <Typography variant="body2" color="warning.main" fontWeight={600}>
-                              Renkli: {glass.price_colored.toFixed(2)} ₺
+                              Renkli: {(Number(glass.price_colored) || 0).toFixed(2)} ₺
                             </Typography>
                           )}
-                          {(glass.price_double_color || 0) > 0 && (
+                          {(Number(glass.price_double_color) || 0) > 0 && (
                             <Typography variant="caption" color="text.secondary">
-                              Çift Renk: {glass.price_double_color.toFixed(2)} ₺
+                              Çift Renk: {(Number(glass.price_double_color) || 0).toFixed(2)} ₺
                             </Typography>
                           )}
                         </Box>
