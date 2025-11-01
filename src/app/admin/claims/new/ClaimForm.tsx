@@ -312,10 +312,19 @@ export default function ClaimForm({
     setSelectedVehicle(vehicle)
     
     // Araç bilgilerini form alanlarına doldur
-    const brand = vehicle.vehicle_brands
-    const categoryId = brand?.category_id
-    const brandId = vehicle.brand_id
-    const vehicleId = vehicle.id
+    const vehicleRecord = vehicle as Record<string, unknown>
+    const brand = (vehicleRecord.vehicle_brands ?? null) as Record<string, unknown> | null
+    const categoryId = typeof brand?.['category_id'] === 'string'
+      ? (brand['category_id'] as string)
+      : typeof (brand?.['vehicle_categories'] as Record<string, unknown> | undefined)?.['id'] === 'string'
+        ? ((brand?.['vehicle_categories'] as Record<string, unknown>)?.['id'] as string)
+        : null
+    const brandId = typeof vehicleRecord['brand_id'] === 'string'
+      ? (vehicleRecord['brand_id'] as string)
+      : typeof brand?.['id'] === 'string'
+        ? (brand['id'] as string)
+        : null
+    const vehicleId = typeof vehicleRecord['id'] === 'string' ? (vehicleRecord['id'] as string) : null
 
     console.log('Brand:', brand, 'CategoryId:', categoryId, 'BrandId:', brandId) // Debug
 
