@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Cloudflare Pages için static export
-  output: 'export',
-  distDir: 'out',
-  trailingSlash: true,
+  // Cloudflare Pages için optimizasyon
   images: {
     unoptimized: true
   }
