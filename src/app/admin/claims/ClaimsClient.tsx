@@ -168,7 +168,7 @@ export default function ClaimsClient() {
       field: 'insurance_companies',
       headerName: 'Sigorta Şirketi',
       width: 180,
-      valueGetter: (value) => value?.name || '-'
+      valueGetter: (value: any) => value?.name || '-'
     },
     {
       field: 'policy_number',
@@ -184,37 +184,37 @@ export default function ClaimsClient() {
       field: 'vehicle_brands',
       headerName: 'Araç Marka',
       width: 130,
-      valueGetter: (value) => value?.name || '-'
+      valueGetter: (value: any) => value?.name || '-'
     },
     {
       field: 'vehicle_models',
       headerName: 'Araç Model',
       width: 130,
-      valueGetter: (value) => value?.name || '-'
+      valueGetter: (value: any) => value?.name || '-'
     },
     {
       field: 'incident_types',
       headerName: 'Olay Türü',
       width: 130,
-      valueGetter: (value) => value?.name || '-'
+      valueGetter: (value: any) => value?.name || '-'
     },
     {
       field: 'damage_types',
       headerName: 'Hasar Türü',
       width: 130,
-      valueGetter: (value) => value?.name || '-'
+      valueGetter: (value: any) => value?.name || '-'
     },
     {
       field: 'incident_date',
       headerName: 'Olay Tarihi',
       width: 120,
-      valueGetter: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-'
+      valueGetter: (value: any) => value ? new Date(value as string).toLocaleDateString('tr-TR') : '-'
     },
     {
       field: 'created_at',
       headerName: 'Oluşturma Tarihi',
       width: 150,
-      valueGetter: (value) => new Date(value).toLocaleDateString('tr-TR', {
+      valueGetter: (value: any) => new Date(value as string).toLocaleDateString('tr-TR', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
