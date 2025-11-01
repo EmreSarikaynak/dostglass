@@ -1407,7 +1407,7 @@ export default function ClaimForm({
               fullWidth
               options={allVehicles}
               value={selectedVehicle}
-              onChange={(event, newValue) => handleVehicleSelect(newValue)}
+              onChange={(event, newValue) => handleVehicleSelect(newValue as Record<string, unknown> | null)}
               filterOptions={(options, { inputValue }) => {
                 // Büyük-küçük harf duyarsız arama
                 const searchValue = inputValue.toLowerCase()
@@ -1625,7 +1625,7 @@ export default function ClaimForm({
                 options={glassSearchOptions}
                 value={selectedGlass}
                 onChange={(_, newValue) => {
-                  handleGlassSelect(newValue)
+                  handleGlassSelect(newValue as Record<string, unknown> | null)
                   // Seçim sonrası inputValue'yu temizle
                   if (newValue) {
                     setGlassSearchQuery('')
