@@ -216,10 +216,24 @@ export function AnnouncementsClient() {
 
   return (
     <>
-      <Card>
+      <Card
+        sx={{
+          borderRadius: 3,
+          boxShadow: '0 4px 12px rgba(2, 86, 145, 0.15)',
+        }}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold">
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
               Duyuru Yönetimi
             </Typography>
             <Button
@@ -228,6 +242,18 @@ export function AnnouncementsClient() {
               onClick={() => {
                 setEditingItem(null)
                 setModalOpen(true)
+              }}
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+                boxShadow: '0 4px 12px rgba(2, 86, 145, 0.25)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #0373C4 0%, #025691 100%)',
+                  boxShadow: '0 6px 16px rgba(2, 86, 145, 0.35)',
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
               Yeni Duyuru
@@ -246,7 +272,17 @@ export function AnnouncementsClient() {
             sx={{
               '& .MuiDataGrid-row:hover': {
                 cursor: 'pointer',
+                bgcolor: (theme) => theme.palette.mode === 'dark' 
+                  ? 'rgba(2, 86, 145, 0.08)' 
+                  : 'rgba(2, 86, 145, 0.04)',
               },
+              '& .MuiDataGrid-columnHeaders': {
+                background: (theme) => theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(2, 86, 145, 0.15) 0%, rgba(0, 44, 81, 0.15) 100%)'
+                  : 'linear-gradient(135deg, rgba(2, 86, 145, 0.05) 0%, rgba(0, 44, 81, 0.05) 100%)',
+                borderRadius: '8px 8px 0 0',
+              },
+              borderRadius: 2,
             }}
           />
         </CardContent>

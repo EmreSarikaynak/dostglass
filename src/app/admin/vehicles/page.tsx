@@ -12,7 +12,7 @@ export default async function VehiclesPage() {
   }
 
   return (
-    <AdminLayout userEmail={user.email} tenantName={user.tenantName}>
+    <AdminLayout userEmail={user.email} tenantName={user.tenantName} userRole={user.role}>
       <Box>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           Araç Kayıtları

@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <AdminLayout userEmail={user.email} tenantName={user.tenantName}>
+    <AdminLayout userEmail={user.email} tenantName={user.tenantName} userRole={user.role}>
       <Box>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           Sistem Ayarları
@@ -45,17 +45,26 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card sx={{ flex: 1, opacity: 0.6 }}>
+          <Card
+            component={Link}
+            href="/admin/general-settings"
+            sx={{
+              flex: 1,
+              textDecoration: 'none',
+              cursor: 'pointer',
+              '&:hover': { boxShadow: 4 },
+            }}
+          >
             <CardContent sx={{ p: 4, textAlign: 'center' }}>
-              <Settings sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+              <Settings sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Genel Ayarlar
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Sistem genelindeki ayarları yapılandırın.
+                Site ayarları, şirket bilgileri, fatura ayarları ve e-posta yapılandırmaları.
               </Typography>
-              <Button variant="outlined" fullWidth sx={{ mt: 2 }} disabled>
-                Yakında
+              <Button variant="contained" fullWidth sx={{ mt: 2 }}>
+                Ayarları Yönet
               </Button>
             </CardContent>
           </Card>

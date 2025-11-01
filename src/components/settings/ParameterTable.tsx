@@ -8,6 +8,7 @@ import {
   TextField,
   InputAdornment,
   Chip,
+  Switch,
 } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { Add, Search, Edit, Delete, Check, Close } from '@mui/icons-material'
@@ -19,6 +20,7 @@ interface ParameterTableProps {
   onAdd: () => void
   onEdit: (row: Record<string, unknown>) => void
   onDelete: (row: Record<string, unknown>) => void
+  onStatusChange?: (row: Record<string, unknown>, newStatus: boolean) => void
   title: string
   searchPlaceholder?: string
 }
@@ -30,6 +32,7 @@ export function ParameterTable({
   onAdd,
   onEdit,
   onDelete,
+  onStatusChange,
   title,
   searchPlaceholder = 'Ara...',
 }: ParameterTableProps) {
@@ -72,12 +75,21 @@ export function ParameterTable({
     headerName: 'Durum',
     width: 100,
     renderCell: (params) => (
-      <Chip
-        icon={params.value ? <Check /> : <Close />}
-        label={params.value ? 'Aktif' : 'Pasif'}
-        color={params.value ? 'success' : 'default'}
-        size="small"
-      />
+      onStatusChange ? (
+        <Switch
+          checked={!!params.value}
+          onChange={(e) => onStatusChange(params.row, e.target.checked)}
+          color="success"
+          size="small"
+        />
+      ) : (
+        <Chip
+          icon={params.value ? <Check /> : <Close />}
+          label={params.value ? 'Aktif' : 'Pasif'}
+          color={params.value ? 'success' : 'default'}
+          size="small"
+        />
+      )
     ),
   }
 
@@ -118,9 +130,12 @@ export function ParameterTable({
         disableRowSelectionOnClick
         autoHeight
         sx={{
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
           '& .MuiDataGrid-cell:focus': {
             outline: 'none',
+          },
+          '& .MuiDataGrid-columnHeaders': {
+            bgcolor: 'background.default',
           },
         }}
       />

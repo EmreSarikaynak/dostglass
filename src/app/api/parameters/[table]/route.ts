@@ -25,22 +25,51 @@ export async function GET(
     }
 
     const supabase = getSupabaseAdmin()
+    const { searchParams } = new URL(request.url)
+    
+    // Admin değilse sadece aktif kayıtları getir
+    const user = await getUserAndRole()
+    const onlyActive = searchParams.get('only_active') === 'true' || (user && user.role !== 'admin')
     
     let query = supabase.from(table).select('*').order('created_at', { ascending: false })
     
+    // Aktif kayıt filtresi (admin değilse veya only_active parametresi varsa)
+    if (onlyActive && ['insurance_companies', 'insured_types', 'incident_types', 'damage_types', 'license_classes', 'vehicle_usage_types', 'glass_brands', 'glass_colors', 'glass_operations', 'installation_methods', 'service_locations', 'vehicle_glass_types', 'glass_positions'].includes(table)) {
+      query = query.eq('is_active', true)
+    }
+    
     // İlçeler için il bilgisini de getir
     if (table === 'districts') {
+      const cityId = searchParams.get('city_id')
       query = supabase.from(table).select('*, cities(name)').order('created_at', { ascending: false })
+      if (cityId) {
+        query = query.eq('city_id', cityId)
+      }
     }
     
     // Araç markaları için kategori bilgisini getir
     if (table === 'vehicle_brands') {
-      query = supabase.from(table).select('*, vehicle_categories(name)').order('created_at', { ascending: false })
+      const categoryId = searchParams.get('category_id')
+      query = supabase.from(table)
+        .select('*, vehicle_categories(name)')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+      if (categoryId) {
+        query = query.eq('category_id', categoryId)
+      }
     }
     
     // Araç modelleri için marka ve kategori bilgisini getir
     if (table === 'vehicle_models') {
-      query = supabase.from(table).select('*, vehicle_brands(name, vehicle_categories(name))').order('created_at', { ascending: false })
+      const brandId = searchParams.get('brand_id')
+      query = supabase
+        .from(table)
+        .select('*, vehicle_brands(id, name, category_id, vehicle_categories(id, name))')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+      if (brandId) {
+        query = query.eq('brand_id', brandId)
+      }
     }
 
     const { data, error } = await query
@@ -59,7 +88,7 @@ export async function GET(
         return {
           ...item,
           category_name: category?.name || '-',
-          vehicle_categories: undefined, // nested object'i kaldır
+          // nested object'i koruyoruz
         }
       })
     }
@@ -72,7 +101,7 @@ export async function GET(
           ...item,
           brand_name: brand?.name || '-',
           category_name: category?.name || '-',
-          vehicle_brands: undefined, // nested object'i kaldır
+          // nested object'i koruyoruz, kaldırmıyoruz
         }
       })
     }

@@ -41,6 +41,9 @@ const parameterConfigs = {
     fields: [
       { name: 'code', label: 'Kod', type: 'text', required: true },
       { name: 'name', label: 'Şirket Adı', type: 'text', required: true },
+      { name: 'logo_url', label: 'Logo URL', type: 'text', required: false },
+      { name: 'work_procedure', label: 'Çalışma Prosedürü (Markdown)', type: 'textarea', required: false, rows: 6 },
+      { name: 'required_documents', label: 'Matbuu Evraklar (Markdown)', type: 'textarea', required: false, rows: 6 },
       { name: 'is_active', label: 'Aktif', type: 'switch' },
     ] as FieldConfig[],
   },
@@ -239,6 +242,26 @@ export function SettingsClient() {
     setDeleteDialogOpen(true)
   }
 
+  const handleStatusChange = async (row: Record<string, unknown>, newStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/parameters/${currentTableKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...row, is_active: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Durum güncellenemedi')
+      }
+
+      showSnackbar('Durum güncellendi', 'success')
+      loadData(currentTableKey)
+    } catch (error) {
+      console.error('Durum güncelleme hatası:', error)
+      showSnackbar('Durum güncellenirken hata oluştu', 'error')
+    }
+  }
+
   const handleSave = async (formData: Record<string, unknown>) => {
     try {
       const method = editingItem ? 'PUT' : 'POST'
@@ -304,6 +327,10 @@ export function SettingsClient() {
                 px: 3,
                 py: 2,
                 minHeight: 48,
+                color: 'text.secondary',
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                },
               },
             }}
           >
@@ -331,6 +358,7 @@ export function SettingsClient() {
                   onAdd={handleAdd}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onStatusChange={handleStatusChange}
                   title={config.title}
                 />
               </Paper>

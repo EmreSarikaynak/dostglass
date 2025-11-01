@@ -27,8 +27,9 @@ interface ParameterModalProps {
 export interface FieldConfig {
   name: string
   label: string
-  type: 'text' | 'switch' | 'select'
+  type: 'text' | 'textarea' | 'switch' | 'select'
   required?: boolean
+  rows?: number // textarea için satır sayısı
   relatedTable?: string // İlişkisel alan için hangi tablodan veri çekileceği
   relatedLabelKey?: string // İlişkili tabloda gösterilecek alan
 }
@@ -114,6 +115,22 @@ export function ParameterModal({
                       required={field.required}
                     />
                   )}
+                />
+              )
+            }
+
+            if (field.type === 'textarea') {
+              return (
+                <TextField
+                  key={field.name}
+                  label={field.label}
+                  value={String(formData[field.name] || '')}
+                  onChange={(e) => handleChange(field.name, e.target.value)}
+                  required={field.required}
+                  fullWidth
+                  multiline
+                  rows={field.rows || 4}
+                  placeholder="Markdown formatında yazabilirsiniz"
                 />
               )
             }

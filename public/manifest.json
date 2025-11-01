@@ -1,0 +1,18 @@
+{
+  "name": "DostlarGlass - Cam Montaj ve Yönetim Sistemi",
+  "short_name": "DostlarGlass",
+  "description": "Cam Sigorta Yönetim Sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#025691",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}
+

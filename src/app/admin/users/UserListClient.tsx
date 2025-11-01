@@ -10,12 +10,18 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { Add, Search, Edit, Delete } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { supabaseBrowser } from '@/lib/supabaseClient'
 
 interface User {
   id: string
@@ -31,13 +37,64 @@ interface UserListClientProps {
 
 export function UserListClient({ users }: UserListClientProps) {
   const router = useRouter()
+  const supabase = supabaseBrowser()
   const [searchText, setSearchText] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const filteredUsers = users.filter(
     (user) =>
       user.email.toLowerCase().includes(searchText.toLowerCase()) ||
       user.tenantName.toLowerCase().includes(searchText.toLowerCase())
   )
+
+  const handleEditUser = (userId: string) => {
+    router.push(`/admin/users/edit/${userId}`)
+  }
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+
+    setIsDeleting(true)
+    try {
+      // user_tenants tablosundan kullanıcıyı sil
+      const { error: tenantError } = await supabase
+        .from('user_tenants')
+        .delete()
+        .eq('user_id', userToDelete.id)
+
+      if (tenantError) throw tenantError
+
+      // Auth kullanıcısını silmek için API çağrısı gerekli
+      // (Bu işlem service role gerektirdiği için backend'de yapılmalı)
+      const response = await fetch(`/api/admin/delete-user/${userToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Kullanıcı silinemedi')
+
+      // Sayfayı yenile
+      router.refresh()
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
+    } catch (error) {
+      console.error('Kullanıcı silinirken hata:', error)
+      alert('Kullanıcı silinirken bir hata oluştu.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setUserToDelete(null)
+  }
 
   const columns: GridColDef[] = [
     {
@@ -81,12 +138,20 @@ export function UserListClient({ users }: UserListClientProps) {
       headerName: 'İşlemler',
       width: 120,
       sortable: false,
-      renderCell: () => (
+      renderCell: (params) => (
         <Box>
-          <IconButton size="small" color="primary">
+          <IconButton 
+            size="small" 
+            color="primary"
+            onClick={() => handleEditUser(params.row.id)}
+          >
             <Edit fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error">
+          <IconButton 
+            size="small" 
+            color="error"
+            onClick={() => handleDeleteClick(params.row)}
+          >
             <Delete fontSize="small" />
           </IconButton>
         </Box>
@@ -149,6 +214,39 @@ export function UserListClient({ users }: UserListClientProps) {
           }}
         />
       </Card>
+
+      {/* Silme Onay Dialogu */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Kullanıcıyı Sil
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            <strong>{userToDelete?.email}</strong> kullanıcısını silmek istediğinizden emin misiniz?
+            Bu işlem geri alınamaz.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={handleDeleteCancel}
+            disabled={isDeleting}
+          >
+            İptal
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Siliniyor...' : 'Sil'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

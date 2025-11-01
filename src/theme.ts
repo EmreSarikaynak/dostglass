@@ -9,15 +9,26 @@ export const getDesignTokens = (mode: PaletteMode) => ({
   palette: {
     mode,
     primary: {
-      main: mode === 'light' ? '#1976d2' : '#90caf9',
+      main: '#025691', // Mavi
+      light: '#0373C4',
+      dark: '#002C50', // Lacivert tonu
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: mode === 'light' ? '#dc004e' : '#f48fb1',
+      main: '#002C51', // Koyu lacivert
+      light: '#004080',
+      dark: '#001A30',
+      contrastText: '#ffffff',
     },
     background: {
-      default: mode === 'light' ? '#f5f5f5' : '#121212',
-      paper: mode === 'light' ? '#ffffff' : '#1e1e1e',
+      default: mode === 'light' ? '#f5f7fa' : '#0C0B1B', // Koyu morumsu lacivert
+      paper: mode === 'light' ? '#ffffff' : '#1a1927',
     },
+    text: {
+      primary: mode === 'light' ? '#000000' : '#ffffff',
+      secondary: mode === 'light' ? '#8B929C' : '#B8BCC4',
+    },
+    divider: mode === 'light' ? 'rgba(0, 44, 80, 0.12)' : 'rgba(255, 255, 255, 0.12)',
   },
   typography: {
     fontFamily: [

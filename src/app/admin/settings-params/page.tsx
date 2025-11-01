@@ -11,7 +11,7 @@ export default async function SettingsParamsPage() {
   }
 
   return (
-    <AdminLayout userEmail={user.email} tenantName={user.tenantName}>
+    <AdminLayout userEmail={user.email} tenantName={user.tenantName} userRole={user.role}>
       <SettingsClient />
     </AdminLayout>
   )

@@ -20,9 +20,10 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { tr } from 'date-fns/locale'
 import dynamic from 'next/dynamic'
 import { supabaseBrowser } from '@/lib/supabaseClient'
+import 'react-quill-new/dist/quill.snow.css'
 
 // React Quill'i dynamically import et (SSR sorunları için)
-const ReactQuill = dynamic(() => import('react-quill'), { 
+const ReactQuill = dynamic(() => import('react-quill-new'), { 
   ssr: false,
   loading: () => <Box sx={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Yükleniyor...</Box>
 })
@@ -151,10 +152,20 @@ export function AnnouncementModal({ open, onClose, onSave, announcement }: Annou
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { height: '90vh' }
+          sx: { 
+            height: '90vh',
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(2, 86, 145, 0.15)',
+          }
         }}
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+            color: 'white',
+            fontWeight: 600,
+          }}
+        >
           {announcement ? 'Duyuru Düzenle' : 'Yeni Duyuru Oluştur'}
         </DialogTitle>
         <DialogContent dividers>
@@ -178,10 +189,22 @@ export function AnnouncementModal({ open, onClose, onSave, announcement }: Annou
                 '& .ql-container': { 
                   minHeight: '300px',
                   fontSize: '14px',
+                  borderRadius: '0 0 8px 8px',
+                },
+                '& .ql-toolbar': {
+                  borderRadius: '8px 8px 0 0',
+                  background: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
                 },
                 '& .ql-editor': {
                   minHeight: '300px',
-                }
+                },
+                '& .ql-editor.ql-blank::before': {
+                  color: '#8B929C',
+                  fontStyle: 'normal',
+                },
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
               }}>
                 <ReactQuill
                   theme="snow"
@@ -237,14 +260,35 @@ export function AnnouncementModal({ open, onClose, onSave, announcement }: Annou
             />
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={saving}>
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button 
+            onClick={onClose} 
+            disabled={saving}
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              color: '#8B929C',
+              '&:hover': {
+                bgcolor: 'rgba(139, 146, 156, 0.1)',
+              },
+            }}
+          >
             İptal
           </Button>
           <Button 
             onClick={handleSubmit} 
             variant="contained" 
             disabled={saving}
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+              boxShadow: '0 4px 12px rgba(2, 86, 145, 0.25)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #0373C4 0%, #025691 100%)',
+                boxShadow: '0 6px 16px rgba(2, 86, 145, 0.35)',
+              },
+            }}
           >
             {saving ? 'Kaydediliyor...' : 'Kaydet'}
           </Button>

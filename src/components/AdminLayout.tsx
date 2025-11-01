@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Drawer,
@@ -36,11 +36,16 @@ import {
   Brightness4,
   Brightness7,
   Campaign,
+  AttachMoney,
+  Search,
+  Analytics,
+  Business,
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseClient'
 import { useColorMode } from '@/app/providers'
 import { BreakingNewsCarousel } from './BreakingNewsCarousel'
+import Image from 'next/image'
 
 const drawerWidth = 280
 
@@ -48,34 +53,98 @@ interface AdminLayoutProps {
   children: React.ReactNode
   userEmail?: string
   tenantName?: string
+  userRole?: 'admin' | 'bayi'
 }
 
-const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
-  { text: 'Kullanıcı Yönetimi', icon: <People />, path: '/admin/users' },
-  { text: 'Duyurular', icon: <Campaign />, path: '/announcements' },
-  { text: 'Yeni İhbar', icon: <Assignment />, path: '/admin/claims/new' },
-  { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
-  { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
-  { text: 'Poliçeler', icon: <Description />, path: '/admin/policies' },
-]
+const getMenuItems = (role?: 'admin' | 'bayi') => {
+  const baseItems = [
+    { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
+  ]
+  
+  // Fiyat modülü - hem admin hem bayi için
+  const priceItems = [
+    { text: 'Fiyat Sorgulama', icon: <Search />, path: role === 'admin' ? '/admin/price-query' : '/bayi/price-query' },
+    { text: 'Cam Fiyat Listesi', icon: <AttachMoney />, path: '/admin/glass-prices' },
+  ]
+  
+  // Admin-only items
+  const adminItems = [
+    { text: 'Kullanıcı Yönetimi', icon: <People />, path: '/admin/users' },
+    { text: 'Sigorta Şirketleri', icon: <Business />, path: '/admin/insurance-companies' },
+    { text: 'Sorgulama Analizi', icon: <Analytics />, path: '/admin/price-query-stats' }, // SADECE ADMIN
+  ]
+  
+  // Bayi için Duyurular ve Anlaşmalı Sigorta Şirketleri menüsü
+  const bayiItems = [
+    { text: 'Anlaşmalı Sigorta Şirketleri', icon: <Business />, path: '/bayi/insurance-partners' },
+    { text: 'Duyurular', icon: <Campaign />, path: '/announcements' },
+  ]
+  
+  const commonItems = [
+    { text: 'Yeni İhbar', icon: <Assignment />, path: '/admin/claims/new' },
+    { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
+    { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
+    { text: 'Poliçeler', icon: <Description />, path: '/admin/policies' },
+  ]
+  
+  if (role === 'admin') {
+    return [...baseItems, ...priceItems, ...adminItems, ...commonItems]
+  } else {
+    return [...baseItems, ...priceItems, ...bayiItems, ...commonItems]
+  }
+}
 
 const settingsSubMenu = [
-  { text: 'Genel Ayarlar', path: '/admin/settings' },
+  { text: 'Genel Ayarlar', path: '/admin/general-settings' },
   { text: 'Parametreler', path: '/admin/settings-params' },
   { text: 'Araç Yönetimi', path: '/admin/vehicle-management' },
   { text: 'Duyuru Yönetimi', path: '/admin/announcements' },
 ]
 
-export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProps) {
+export function AdminLayout({ children, userEmail, tenantName, userRole }: AdminLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { mode, toggleColorMode } = useColorMode()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [settingsOpen, setSettingsOpen] = useState(
-    pathname.startsWith('/admin/settings') || pathname.startsWith('/admin/vehicle-management')
+    pathname.startsWith('/admin/settings') || 
+    pathname.startsWith('/admin/general-settings') || 
+    pathname.startsWith('/admin/vehicle-management') ||
+    pathname.startsWith('/admin/announcements')
   )
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [siteTitle, setSiteTitle] = useState('DostlarGlass')
+  const [userId, setUserId] = useState<string | null>(null)
+  
+  const menuItems = getMenuItems(userRole)
+
+  // Sistem ayarlarını ve kullanıcı ID'sini çek
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/settings')
+        if (response.ok) {
+          const settings = await response.json()
+          setLogoUrl(settings.site_logo_url)
+          setSiteTitle(settings.site_title || 'DostlarGlass')
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error)
+      }
+    }
+    
+    const fetchUserId = async () => {
+      const supabase = supabaseBrowser()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+      }
+    }
+    
+    fetchSettings()
+    fetchUserId()
+  }, [])
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -87,6 +156,13 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
 
   const handleMenuClose = () => {
     setAnchorEl(null)
+  }
+
+  const handleProfileEdit = () => {
+    handleMenuClose()
+    if (userId) {
+      router.push(`/admin/users/${userId}/edit`)
+    }
   }
 
   const handleLogout = async () => {
@@ -101,52 +177,121 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
       {/* Logo ve Başlık */}
       <Box 
         sx={{ 
-          p: 3, 
+          p: 2, 
           textAlign: 'center', 
           background: mode === 'dark' 
-            ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' 
-            : 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+            ? 'linear-gradient(135deg, #002C51 0%, #0C0B1B 100%)' 
+            : 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
           color: 'white',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          position: 'relative',
         }}
       >
-        <Box
-          sx={{
-            width: 60,
-            height: 60,
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)',
-            mx: 'auto',
-            mb: 1.5,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            transition: 'transform 0.2s',
-            '&:hover': {
-              transform: 'scale(1.05)',
-            },
-          }}
-        >
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              color: 'primary.main', 
-              fontWeight: 'bold',
-              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+        {logoUrl ? (
+          <Box
+            sx={{
+              width: '100%',
+              height: 60,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 1,
             }}
           >
-            DG
-          </Typography>
-        </Box>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
-          DostGlass
-        </Typography>
-        <Typography variant="caption" sx={{ fontSize: '0.75rem', opacity: 0.9 }}>
-          Cam Sigorta Yönetimi
+            {/* Beyaz Arka Plan - Logo İçin */}
+            <Box
+              sx={{
+                position: 'absolute',
+                width: '85%',
+                height: '85%',
+                background: 'rgba(255, 255, 255, 0.95)', // Daha opak beyaz
+                borderRadius: 3,
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+                border: '2px solid rgba(255, 255, 255, 1)',
+              }}
+            />
+            <Image
+              src={logoUrl}
+              alt={siteTitle}
+              fill
+              style={{
+                objectFit: 'contain',
+                padding: '12px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))', // Logo'ya gölge
+              }}
+              priority
+            />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              width: 60,
+              height: 60,
+              borderRadius: '16px',
+              background: mode === 'dark'
+                ? 'linear-gradient(135deg, #025691 0%, #0373C4 100%)'
+                : 'linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)',
+              mx: 'auto',
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(2, 86, 145, 0.25)',
+              transition: 'transform 0.2s',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              },
+              // Beyaz efekt
+              position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: -4,
+                background: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '20px',
+                backdropFilter: 'blur(10px)',
+                zIndex: -1,
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+              },
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                color: mode === 'dark' ? '#ffffff' : '#025691', 
+                fontWeight: 'bold',
+                background: mode === 'dark'
+                  ? 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)'
+                  : 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              DG
+            </Typography>
+          </Box>
+        )}
+        <Typography 
+          variant="subtitle1" 
+          fontWeight="bold" 
+          sx={{ 
+            fontSize: '0.9rem',
+            letterSpacing: 0.3,
+            textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            lineHeight: 1.2,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            maxHeight: '2.4em',
+            px: 1,
+          }}
+        >
+          {siteTitle}
         </Typography>
       </Box>
 
@@ -163,15 +308,20 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
                 selected={isActive}
                 sx={{
                   borderRadius: 2,
+                  transition: 'all 0.2s ease-in-out',
                   '&.Mui-selected': {
-                    bgcolor: 'primary.main',
+                    bgcolor: mode === 'dark' ? '#025691' : '#025691',
                     color: 'white',
+                    boxShadow: '0 2px 8px rgba(2, 86, 145, 0.25)',
                     '&:hover': {
-                      bgcolor: 'primary.dark',
+                      bgcolor: mode === 'dark' ? '#0373C4' : '#002C50',
                     },
                     '& .MuiListItemIcon-root': {
                       color: 'white',
                     },
+                  },
+                  '&:hover': {
+                    bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.15)' : 'rgba(2, 86, 145, 0.08)',
                   },
                 }}
               >
@@ -188,22 +338,38 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
         <ListItem disablePadding sx={{ mb: 0.5 }}>
           <ListItemButton
             onClick={() => setSettingsOpen(!settingsOpen)}
-            selected={pathname.startsWith('/admin/settings')}
+            selected={
+              pathname.startsWith('/admin/settings') || 
+              pathname.startsWith('/admin/general-settings') || 
+              pathname.startsWith('/admin/vehicle-management') ||
+              pathname.startsWith('/admin/announcements')
+            }
             sx={{
               borderRadius: 2,
+              transition: 'all 0.2s ease-in-out',
               '&.Mui-selected': {
-                bgcolor: 'primary.main',
+                bgcolor: mode === 'dark' ? '#025691' : '#025691',
                 color: 'white',
+                boxShadow: '0 2px 8px rgba(2, 86, 145, 0.25)',
                 '&:hover': {
-                  bgcolor: 'primary.dark',
+                  bgcolor: mode === 'dark' ? '#0373C4' : '#002C50',
                 },
                 '& .MuiListItemIcon-root': {
                   color: 'white',
                 },
               },
+              '&:hover': {
+                bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.15)' : 'rgba(2, 86, 145, 0.08)',
+              },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40, color: pathname.startsWith('/admin/settings') ? 'white' : 'inherit' }}>
+            <ListItemIcon sx={{ 
+              minWidth: 40, 
+              color: (pathname.startsWith('/admin/settings') || 
+                     pathname.startsWith('/admin/general-settings') || 
+                     pathname.startsWith('/admin/vehicle-management') ||
+                     pathname.startsWith('/admin/announcements')) ? 'white' : 'inherit' 
+            }}>
               <Settings />
             </ListItemIcon>
             <ListItemText primary="Ayarlar" />
@@ -224,27 +390,36 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
                     sx={{
                       pl: 4,
                       borderRadius: 2,
+                      transition: 'all 0.2s ease-in-out',
                       '&.Mui-selected': {
-                        bgcolor: 'rgba(25, 118, 210, 0.12)',
-                        color: 'primary.dark',
+                        bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.25)' : 'rgba(2, 86, 145, 0.12)',
+                        color: mode === 'dark' ? '#ffffff' : '#002C50',
                         fontWeight: 600,
+                        borderLeft: mode === 'dark' ? '3px solid #025691' : '3px solid #025691',
                         '&:hover': {
-                          bgcolor: 'rgba(25, 118, 210, 0.2)',
+                          bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.35)' : 'rgba(2, 86, 145, 0.2)',
                         },
                       },
                       '&:hover': {
-                        bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
                       },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 40 }}>
-                      <Tune sx={{ color: isActive ? 'primary.dark' : 'text.secondary', fontSize: 20 }} />
+                      <Tune sx={{ 
+                        color: isActive 
+                          ? (mode === 'dark' ? '#ffffff' : 'primary.dark') 
+                          : 'text.secondary', 
+                        fontSize: 20 
+                      }} />
                     </ListItemIcon>
                     <ListItemText 
                       primary={subItem.text}
                       primaryTypographyProps={{
                         fontSize: '0.9rem',
-                        color: isActive ? 'primary.dark' : 'text.primary',
+                        color: isActive 
+                          ? (mode === 'dark' ? '#ffffff' : 'primary.dark') 
+                          : 'text.primary',
                         fontWeight: isActive ? 600 : 400,
                       }}
                     />
@@ -284,7 +459,8 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
             {menuItems.find((item) => item.path === pathname)?.text || 
              settingsSubMenu.find((item) => item.path === pathname)?.text || 
-             (pathname.startsWith('/admin/settings') ? 'Ayarlar' : 'Dashboard')}
+             (pathname === '/admin/settings' ? 'Sistem Ayarları' : 
+              pathname.startsWith('/admin/settings') ? 'Ayarlar' : 'Dashboard')}
           </Typography>
 
           {/* Koyu Mod Toggle ve Kullanıcı Menüsü */}
@@ -303,7 +479,15 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
               </Typography>
             </Box>
             <IconButton onClick={handleMenuClick} size="large">
-              <Avatar sx={{ bgcolor: 'primary.main' }}>
+              <Avatar sx={{ 
+                bgcolor: '#025691',
+                boxShadow: '0 2px 8px rgba(2, 86, 145, 0.25)',
+                '&:hover': {
+                  bgcolor: '#0373C4',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease-in-out',
+              }}>
                 <AccountCircle />
               </Avatar>
             </IconButton>
@@ -316,6 +500,12 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
               </Typography>
             </MenuItem>
             <Divider />
+            <MenuItem onClick={handleProfileEdit} disabled={!userId}>
+              <ListItemIcon>
+                <AccountCircle fontSize="small" />
+              </ListItemIcon>
+              Profili Güncelle
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <Logout fontSize="small" />
@@ -341,7 +531,11 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
           }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              bgcolor: mode === 'dark' ? '#1a1927' : '#ffffff',
+            },
           }}
         >
           {drawer}
@@ -355,7 +549,8 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              borderRight: '1px solid rgba(0,0,0,0.08)',
+              borderRight: mode === 'dark' ? '1px solid rgba(2, 86, 145, 0.2)' : '1px solid rgba(0, 44, 80, 0.12)',
+              bgcolor: mode === 'dark' ? '#1a1927' : '#ffffff',
             },
           }}
           open
@@ -389,12 +584,11 @@ export function AdminLayout({ children, userEmail, tenantName }: AdminLayoutProp
             py: 2,
             px: 3,
             mt: 'auto',
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light'
-                ? theme.palette.grey[200]
-                : theme.palette.grey[800],
+            backgroundColor: mode === 'light'
+              ? 'rgba(2, 86, 145, 0.05)'
+              : 'rgba(12, 11, 27, 0.8)',
             borderTop: '1px solid',
-            borderColor: 'divider',
+            borderColor: mode === 'light' ? 'rgba(2, 86, 145, 0.15)' : 'rgba(2, 86, 145, 0.3)',
           }}
         >
           <Typography variant="body2" color="text.secondary" align="center">

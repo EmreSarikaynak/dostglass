@@ -94,7 +94,7 @@ export function BreakingNewsCarousel() {
       <Paper
         elevation={3}
         sx={{
-          mb: 3,
+          mb: 1.5,
           background: theme.palette.mode === 'dark'
             ? 'linear-gradient(135deg, #0C0B1B 0%, #002C51 50%, #002C50 100%)'
             : 'linear-gradient(135deg, #002C50 0%, #025691 50%, #002C51 100%)',

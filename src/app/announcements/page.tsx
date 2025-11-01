@@ -20,6 +20,7 @@ export default async function AnnouncementsListPage() {
     <AdminLayout
       userEmail={user.email}
       tenantName={user.tenantName}
+      userRole={user.role}
     >
       <Box sx={{ p: 3 }}>
         <Suspense fallback={<CircularProgress />}>

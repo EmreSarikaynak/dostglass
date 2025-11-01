@@ -61,21 +61,87 @@ export default function LoginPage() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Card sx={{ width: '100%', maxWidth: 400 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #0C0B1B 0%, #002C51 50%, #025691 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradientShift 15s ease infinite',
+        '@keyframes gradientShift': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+      }}
+    >
+      <Container maxWidth="sm">
+        <Card 
+          sx={{ 
+            width: '100%', 
+            maxWidth: 450,
+            borderRadius: 3,
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            background: (theme) => theme.palette.mode === 'dark' 
+              ? 'rgba(26, 25, 39, 0.95)' 
+              : 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
           <CardContent sx={{ p: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom align="center">
+            {/* Logo Box */}
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+                mx: 'auto',
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(2, 86, 145, 0.4)',
+              }}
+            >
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  color: 'white', 
+                  fontWeight: 'bold',
+                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                DG
+              </Typography>
+            </Box>
+
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              gutterBottom 
+              align="center"
+              sx={{ 
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
               {process.env.NEXT_PUBLIC_APP_NAME || 'DostGlass'}
             </Typography>
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+            <Typography 
+              variant="body2" 
+              align="center" 
+              sx={{ 
+                mb: 4, 
+                color: '#8B929C',
+                fontWeight: 500,
+              }}
+            >
               Kurumsal Portal Girişi
             </Typography>
 
@@ -113,15 +179,29 @@ export default function LoginPage() {
                 variant="contained"
                 size="large"
                 disabled={loading}
-                sx={{ mt: 3 }}
+                sx={{ 
+                  mt: 3,
+                  py: 1.5,
+                  background: 'linear-gradient(135deg, #025691 0%, #002C51 100%)',
+                  boxShadow: '0 4px 15px rgba(2, 86, 145, 0.4)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #0373C4 0%, #025691 100%)',
+                    boxShadow: '0 6px 20px rgba(2, 86, 145, 0.6)',
+                    transform: 'translateY(-2px)',
+                  },
+                  '&:disabled': {
+                    background: '#8B929C',
+                  },
+                }}
               >
                 {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
               </Button>
             </form>
           </CardContent>
         </Card>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   )
 }
 

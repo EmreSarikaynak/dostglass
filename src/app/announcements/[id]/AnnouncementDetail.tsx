@@ -43,17 +43,31 @@ export function AnnouncementDetail({ id }: { id: string }) {
   const loadAnnouncement = async () => {
     try {
       const supabase = supabaseBrowser()
+      
+      console.log('Loading announcement with ID:', id)
+      
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
         .eq('id', id)
         .single()
 
-      if (error) throw error
+      console.log('Announcement data:', data)
+      console.log('Announcement error:', error)
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
+      if (!data) {
+        throw new Error('Duyuru bulunamadı')
+      }
+      
       setAnnouncement(data)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Duyuru yüklenirken hata:', err)
-      setError('Duyuru bulunamadı')
+      setError(err.message || 'Duyuru bulunamadı veya erişim yetkiniz yok')
     } finally {
       setLoading(false)
     }
