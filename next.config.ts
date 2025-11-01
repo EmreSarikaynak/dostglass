@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true, // Cloudflare için gerekli
     remotePatterns: [
       {
         protocol: 'https',
