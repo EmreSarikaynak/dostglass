@@ -150,7 +150,6 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
         console.log(`📄 ${sheetName} → ${sheetCategory} (${jsonData.length} satır)`)
 
         // 🏷️ BAŞLIK TAKİBİ (UĞURLU için)
-        let currentVehicleBrand: string | null = null
         let rowsAdded = 0
 
         let skippedRows = 0
@@ -272,7 +271,6 @@ export function ExcelImportDialog({ open, onClose, onSuccess }: ExcelImportDialo
         
         // 🎯 UĞURLU İÇİN AKILLI ARAÇ EŞLEŞTIRME
         let matchedBrand: any = null
-        let vehicleInfo = ''
         
         if (supplier === 'UĞURLU') {
           // 🎯 UĞURLU İÇİN SÜPER AKILLI EŞLEŞTIRME

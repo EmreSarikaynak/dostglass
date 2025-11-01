@@ -665,7 +665,6 @@ export default function ClaimForm({
       
       const features = normalizeTextForType(String(glass.features || ''))
       const supplier = normalizeTextForType(String(glass.supplier || ''))
-      const positionTextForType = normalizeTextForType(String(glass.position_text || ''))
       console.log('🔎 Cam tipi aranıyor:', features, 'supplier:', supplier)
       
       let matchedType = null

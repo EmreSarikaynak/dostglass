@@ -33,7 +33,6 @@ export function ParameterTable({
   onEdit,
   onDelete,
   onStatusChange,
-  title,
   searchPlaceholder = 'Ara...',
 }: ParameterTableProps) {
   const [searchText, setSearchText] = useState('')

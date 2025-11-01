@@ -4,7 +4,7 @@ import { getUserAndRole } from '@/lib/auth'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Yetki kontrolü
@@ -16,7 +16,7 @@ export async function DELETE(
       )
     }
 
-    const userId = params.id
+    const { id: userId } = await params
 
     if (!userId) {
       return NextResponse.json(

@@ -30,7 +30,6 @@ interface HTMLEditorProps {
 
 export function HTMLEditor({ value, onChange, label = 'HTML İçerik', rows = 15 }: HTMLEditorProps) {
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
-  const [colorPickerOpen, setColorPickerOpen] = useState(false)
 
   const insertHTML = (tag: string, closeTag?: string) => {
     const textarea = document.getElementById('html-editor-textarea') as HTMLTextAreaElement

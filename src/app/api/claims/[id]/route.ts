@@ -87,7 +87,7 @@ export async function PUT(
     }
 
     // İhbarı güncelle
-    const { data: claim, error: claimError } = await supabase
+    const { error: claimError } = await supabase
       .from('claims')
       .update(body.claim)
       .eq('id', id)

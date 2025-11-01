@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const { data: uploadData, error: uploadError } = await supabaseAdmin
+    const { error: uploadError } = await supabaseAdmin
       .storage
       .from('public')
       .upload(filePath, buffer, {
