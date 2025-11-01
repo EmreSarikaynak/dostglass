@@ -905,12 +905,12 @@ export default function ClaimForm({
     console.log('🎯 Liste\'den seçilen cam:', glassPrice)
     
     // Temel cam bilgileri
-    handleItemChange('glass_position_id', glassPrice.glass_position_id || '')
-    handleItemChange('glass_type_id', glassPrice.glass_type_id || '')
-    handleItemChange('glass_brand_id', glassPrice.glass_brand_id || '')
-    handleItemChange('glass_color_id', glassPrice.glass_color_id || '')
-    handleItemChange('glass_code', glassPrice.product_code || '')
-    handleItemChange('unit_price', glassPrice.price_colorless || 0)
+    handleItemChange('glass_position_id', String(glassPrice.glass_position_id || ''))
+    handleItemChange('glass_type_id', String(glassPrice.glass_type_id || ''))
+    handleItemChange('glass_brand_id', String(glassPrice.glass_brand_id || ''))
+    handleItemChange('glass_color_id', String(glassPrice.glass_color_id || ''))
+    handleItemChange('glass_code', String(glassPrice.product_code || ''))
+    handleItemChange('unit_price', Number(glassPrice.price_colorless) || 0)
     
     // Özellikleri kontrol et ve notlara ekle
     let notes = ''
