@@ -548,51 +548,6 @@ export default function ClaimForm({
   }
 
 
-  const handleGlassSearch = async (showNotification = false) => {
-    const searchTerm = glassSearchQuery.trim() || currentItem.glass_code
-    
-    if (!searchTerm) {
-      if (showNotification) {
-        showSnackbar('Lütfen cam kodu veya arama kriteri giriniz', 'error')
-      }
-      return
-    }
-
-    setLoading(true)
-    try {
-      console.log('🔍 Cam aranıyor:', searchTerm)
-      // Cam kodu veya özelliklere göre ara
-      const params = new URLSearchParams({
-        detailed: 'true',
-        search: searchTerm,
-        ...(formData.vehicle_model_id && { vehicle_model_id: formData.vehicle_model_id })
-      })
-      
-      const res = await fetch(`/api/glass-prices?${params}`)
-      const data = await res.json()
-      
-      console.log('📦 Bulunan cam sayısı:', data.data?.length || 0)
-      const results = (data.data || []) as GlassOption[]
-      setAvailableGlassPrices(results)
-      
-      // Sadece manuel aramada bildirim göster
-      if (showNotification) {
-        if (results.length > 0) {
-          showSnackbar(`✅ ${results.length} adet cam bulundu`, 'success')
-        } else {
-          showSnackbar('⚠️ Cam bulunamadı', 'warning')
-        }
-      }
-    } catch (error) {
-      console.error('❌ Cam arama hatası:', error)
-      if (showNotification) {
-        showSnackbar('Cam bilgileri bulunamadı', 'error')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Autocomplete'ten cam seçimi
   const handleGlassSelect = async (glass: GlassOption | null) => {
     setSelectedGlass(glass)

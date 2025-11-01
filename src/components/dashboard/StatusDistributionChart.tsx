@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, type PieLabelRenderProps } from 'recharts'
 
 interface StatusDistributionChartProps {
   data: Array<{ name: string; value: number; color: string }>
@@ -11,35 +11,42 @@ export function StatusDistributionChart({ data }: StatusDistributionChartProps) 
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
   const RADIAN = Math.PI / 180
-  const renderCustomizedLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    percent,
-  }: {
-    cx: number
-    cy: number
-    midAngle: number
-    innerRadius: number
-    outerRadius: number
-    percent: number
-  }) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+  const renderCustomizedLabel = (props: PieLabelRenderProps) => {
+    const toNumber = (value: number | string | undefined) => {
+      if (typeof value === 'number') return value
+      const parsed = Number(value ?? 0)
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+
+    const {
+      cx,
+      cy,
+      midAngle,
+      innerRadius,
+      outerRadius,
+      percent,
+    } = props
+    const cxNumber = toNumber(cx)
+    const cyNumber = toNumber(cy)
+    const midAngleNumber = toNumber(midAngle)
+    const innerRadiusNumber = toNumber(innerRadius)
+    const outerRadiusNumber = toNumber(outerRadius)
+    const percentNumber = toNumber(percent)
+
+    const radius = innerRadiusNumber + (outerRadiusNumber - innerRadiusNumber) * 0.5
+    const x = cxNumber + radius * Math.cos(-midAngleNumber * RADIAN)
+    const y = cyNumber + radius * Math.sin(-midAngleNumber * RADIAN)
 
     return (
       <text
         x={x}
         y={y}
         fill="white"
-        textAnchor={x > cx ? 'start' : 'end'}
+        textAnchor={x > cxNumber ? 'start' : 'end'}
         dominantBaseline="central"
         style={{ fontSize: '14px', fontWeight: 'bold' }}
       >
-        {`${(percent * 100).toFixed(0)}%`}
+        {`${(percentNumber * 100).toFixed(0)}%`}
       </text>
     )
   }
@@ -106,4 +113,3 @@ export function StatusDistributionChart({ data }: StatusDistributionChartProps) 
     </Card>
   )
 }
-

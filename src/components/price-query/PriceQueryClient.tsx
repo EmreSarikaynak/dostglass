@@ -7,7 +7,6 @@ import {
   CardContent,
   Typography,
   TextField,
-  Grid,
   Autocomplete,
   Button,
   Table,
@@ -24,6 +23,7 @@ import {
   Collapse,
   Divider,
 } from '@mui/material'
+import Grid from '@mui/material/GridLegacy'
 import {
   Clear,
   FilterList,

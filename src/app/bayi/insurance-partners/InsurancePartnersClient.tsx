@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Avatar,
   Dialog,
   DialogTitle,
@@ -21,6 +20,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material'
+import Grid from '@mui/material/GridLegacy'
 import { Close, Description, Policy, Business } from '@mui/icons-material'
 // import ReactMarkdown from 'react-markdown'
 
@@ -385,4 +385,3 @@ export function InsurancePartnersClient() {
     </Box>
   )
 }
-

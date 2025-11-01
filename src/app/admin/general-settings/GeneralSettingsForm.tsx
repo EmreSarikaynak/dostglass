@@ -15,11 +15,11 @@ import {
   InputAdornment,
   Avatar,
   IconButton,
-  Grid,
   Divider,
   Paper,
   Chip,
 } from '@mui/material'
+import Grid from '@mui/material/GridLegacy'
 import { useRouter } from 'next/navigation'
 import {
   ArrowBack,
@@ -1340,4 +1340,3 @@ export function GeneralSettingsForm({ initialSettings }: Props) {
     </Box>
   )
 }
-

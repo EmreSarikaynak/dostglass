@@ -10,10 +10,10 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   CircularProgress,
-  Grid,
   Chip,
   useTheme,
 } from '@mui/material'
+import Grid from '@mui/material/GridLegacy'
 import {
   People,
   Assignment,
@@ -303,4 +303,3 @@ export function DashboardClient() {
     </Box>
   )
 }
-

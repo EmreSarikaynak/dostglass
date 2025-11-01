@@ -17,9 +17,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
   Paper,
 } from '@mui/material'
+import Grid from '@mui/material/GridLegacy'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import { 
   Search, 
@@ -1098,4 +1098,3 @@ export function GlassPricesClient() {
     </Box>
   )
 }
-
