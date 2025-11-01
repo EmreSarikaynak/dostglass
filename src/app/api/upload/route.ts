@@ -3,6 +3,9 @@ import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import { getUserAndRole } from '@/lib/auth'
 
+// Bu route Node.js runtime kullanmalı (filesystem erişimi gerekiyor)
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     // Admin kontrolü
@@ -59,4 +62,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Upload başarısız' }, { status: 500 })
   }
 }
-
