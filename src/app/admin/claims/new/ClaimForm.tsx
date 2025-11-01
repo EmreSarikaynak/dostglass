@@ -967,7 +967,10 @@ export default function ClaimForm({
     }
   }
 
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+  const showSnackbar = (
+    message: string,
+    severity: 'success' | 'error' | 'warning'
+  ) => {
     setSnackbar({ open: true, message, severity })
   }
 
