@@ -7,7 +7,6 @@ import {
   Button,
   Card,
   Chip,
-  Grid,
   Stack,
   Typography,
   Table,
@@ -19,6 +18,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material'
+import Grid from '@mui/material/Grid2'
 import {
   ArrowBack as BackIcon,
   Edit as EditIcon,
@@ -236,7 +236,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
 
       <Grid container spacing={3}>
         {/* Sigorta & Poliçe Bilgileri */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Sigorta & Poliçe Bilgileri
@@ -253,7 +253,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
         </Grid>
 
         {/* Hasar Bilgileri */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Hasar Bilgileri
@@ -268,7 +268,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
         </Grid>
 
         {/* Sigortalı Bilgileri */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Sigortalı Bilgileri
@@ -285,7 +285,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
         </Grid>
 
         {/* Sürücü Bilgileri */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Sürücü Bilgileri
@@ -305,7 +305,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
         </Grid>
 
         {/* Araç Bilgileri */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Araç Bilgileri
@@ -323,7 +323,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
 
         {/* Notlar */}
         {claim.notes && (
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 Notlar
@@ -336,7 +336,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
         )}
 
         {/* Cam Kalemleri */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Cam Kalemleri
