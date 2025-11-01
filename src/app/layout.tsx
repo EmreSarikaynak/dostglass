@@ -3,6 +3,9 @@ import { Providers } from './providers'
 import { getSystemSettings } from '@/lib/getSystemSettings'
 import 'react-quill-new/dist/quill.snow.css'
 
+// Cloudflare Pages için Edge Runtime
+export const runtime = 'edge'
+
 // Metadata'yı 5 saniyede bir yenile
 export const revalidate = 5
 
