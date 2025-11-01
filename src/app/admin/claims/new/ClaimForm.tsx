@@ -425,8 +425,8 @@ export default function ClaimForm({
       
       // Fiyat hesaplama
       if (field === 'unit_price' || field === 'quantity') {
-        const unitPrice = field === 'unit_price' ? parseFloat(value as string) || 0 : parseFloat(updated.unit_price as string) || 0
-        const quantity = field === 'quantity' ? parseInt(value as string) || 1 : parseInt(updated.quantity as string) || 1
+        const unitPrice = field === 'unit_price' ? parseFloat(String(value)) || 0 : Number(updated.unit_price) || 0
+        const quantity = field === 'quantity' ? parseInt(String(value)) || 1 : Number(updated.quantity) || 1
         const subtotal = unitPrice * quantity
         const vatRate = 20 // Varsayılan KDV oranı
         const vatAmount = (subtotal * vatRate) / 100
