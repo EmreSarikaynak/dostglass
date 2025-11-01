@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
 import { getUserAndRole } from '@/lib/auth'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
-// Bu route Node.js runtime kullanmalı (filesystem erişimi gerekiyor)
-export const runtime = 'nodejs'
+// Cloudflare Pages requires Edge runtime
+export const runtime = 'edge'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +21,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 })
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
+
     // Dosya adını güvenli hale getir
     const timestamp = Date.now()
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
@@ -29,30 +30,32 @@ export async function POST(request: NextRequest) {
 
     // Upload dizini
     const uploadDir = type === 'logo' ? 'insurance-logos' : 'insurance-documents'
-    const publicPath = join(process.cwd(), 'public', 'uploads', uploadDir)
-    
-    // Ensure directory exists (in production, use cloud storage)
-    try {
-      const fs = require('fs')
-      if (!fs.existsSync(publicPath)) {
-        fs.mkdirSync(publicPath, { recursive: true })
-      }
-    } catch (err) {
-      console.error('Directory creation error:', err)
+    const storagePath = `uploads/${uploadDir}/${fileName}`
+
+    const bytes = await file.arrayBuffer()
+    const buffer = new Uint8Array(bytes)
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('public')
+      .upload(storagePath, buffer, {
+        contentType: file.type,
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError)
+      return NextResponse.json({ error: 'Dosya yüklenemedi' }, { status: 500 })
     }
 
-    const filePath = join(publicPath, fileName)
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from('public')
+      .getPublicUrl(storagePath)
 
-    await writeFile(filePath, buffer)
-
-    // Return public URL
-    const url = `/uploads/${uploadDir}/${fileName}`
+    const publicUrl = publicUrlData.publicUrl
 
     return NextResponse.json({
       success: true,
-      url,
+      url: publicUrl,
       fileName,
       size: file.size,
       type: file.type,
