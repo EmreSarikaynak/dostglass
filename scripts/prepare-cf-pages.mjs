@@ -1,4 +1,4 @@
-import { copyFile, mkdir, access } from "node:fs/promises";
+import { copyFile, mkdir, access, cp } from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,6 +30,37 @@ async function main() {
   console.log(
     "[prepare-cf-pages] Copied .open-next/worker.js to Pages output directory."
   );
+
+  const requiredDirs = [
+    "cloudflare",
+    "middleware",
+    "server-functions",
+    ".build",
+    "dynamodb-provider"
+  ];
+
+  for (const dir of requiredDirs) {
+    const sourceDir = path.join(projectRoot, ".open-next", dir);
+    const targetDir = path.join(assetsDir, dir);
+    try {
+      await access(sourceDir, constants.R_OK);
+      await cp(sourceDir, targetDir, { recursive: true });
+      console.log(
+        `[prepare-cf-pages] Synced ${dir} -> ${path.relative(projectRoot, targetDir)}`
+      );
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        console.warn(
+          `[prepare-cf-pages] Skipping missing directory: ${path.relative(
+            projectRoot,
+            sourceDir
+          )}`
+        );
+      } else {
+        throw error;
+      }
+    }
+  }
 }
 
 main().catch((error) => {
