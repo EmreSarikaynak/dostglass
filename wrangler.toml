@@ -1,7 +1,7 @@
 name = "dostglass"
-compatibility_date = "2024-01-01"
-pages_build_output_dir = ".open-next/pages"
+compatibility_date = "2025-04-01"
+pages_build_output_dir = ".vercel/output/static"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production.vars]
-# Environment variables buraya eklenecek (Cloudflare dashboard'dan da eklenebilir)
+# Production environment variables can also be set in the Cloudflare dashboard.
