@@ -2,3 +2,9 @@ name = "dostglass"
 compatibility_date = "2025-04-01"
 pages_build_output_dir = ".open-next/assets"
 compatibility_flags = ["nodejs_compat"]
+
+[env.production.vars]
+NEXT_PUBLIC_SUPABASE_URL="https://cuxgnskbdmolbvaatlif.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1eGduc2tiZG1vbGJ2YWF0bGlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MDMzOTksImV4cCI6MjA3NjE3OTM5OX0.w2kAhZOq1F-ivKTz7iHLyC0JXpLG5RwbqyHnQPRBJn8"
+NEXT_PUBLIC_APP_NAME="DostGlass"
+# Production environment variables can also be set in the Cloudflare dashboard.
