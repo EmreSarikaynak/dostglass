@@ -55,32 +55,48 @@ interface StatsData {
   top_users: TopUser[]
 }
 
-export function PriceQueryStats() {
+interface PriceQueryStatsProps {
+  showHeader?: boolean
+}
+
+export function PriceQueryStats({ showHeader = true }: PriceQueryStatsProps) {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<StatsData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [period, setPeriod] = useState<string>('30')
 
   useEffect(() => {
-    loadStats()
-  }, [period])
+    let isActive = true
 
-  const loadStats = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/price-query/stats?days=${period}`)
-      if (!res.ok) {
-        throw new Error('İstatistikler yüklenemedi')
+    const fetchStats = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await fetch(`/api/price-query/stats?days=${period}`)
+        if (!res.ok) {
+          throw new Error('İstatistikler yüklenemedi')
+        }
+        const data = await res.json()
+        if (isActive) {
+          setStats(data)
+        }
+      } catch (err) {
+        if (isActive) {
+          setError(err instanceof Error ? err.message : 'Hata oluştu')
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false)
+        }
       }
-      const data = await res.json()
-      setStats(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Hata oluştu')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchStats()
+
+    return () => {
+      isActive = false
+    }
+  }, [period])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -105,24 +121,34 @@ export function PriceQueryStats() {
     return <Alert severity="info">Henüz veri yok</Alert>
   }
 
+  const periodSelector = (
+    <ToggleButtonGroup
+      value={period}
+      exclusive
+      onChange={(_, value) => value && setPeriod(value)}
+      size="small"
+    >
+      <ToggleButton value="7">Son 7 Gün</ToggleButton>
+      <ToggleButton value="30">Son 30 Gün</ToggleButton>
+      <ToggleButton value="90">Son 90 Gün</ToggleButton>
+    </ToggleButtonGroup>
+  )
+
   return (
     <Box>
       {/* Başlık ve Periyot Seçimi */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight={700} color="primary.main">
-          📊 Fiyat Sorgulama İstatistikleri
-        </Typography>
-        <ToggleButtonGroup
-          value={period}
-          exclusive
-          onChange={(_, value) => value && setPeriod(value)}
-          size="small"
-        >
-          <ToggleButton value="7">Son 7 Gün</ToggleButton>
-          <ToggleButton value="30">Son 30 Gün</ToggleButton>
-          <ToggleButton value="90">Son 90 Gün</ToggleButton>
-        </ToggleButtonGroup>
-      </Stack>
+      {showHeader ? (
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h5" fontWeight={700} color="primary.main">
+            📊 Fiyat Sorgulama İstatistikleri
+          </Typography>
+          {periodSelector}
+        </Stack>
+      ) : (
+        <Box display="flex" justifyContent="flex-end" mb={3}>
+          {periodSelector}
+        </Box>
+      )}
 
       {/* Özet Kartlar */}
       <Box sx={{ mb: 4 }}>
@@ -285,4 +311,3 @@ export function PriceQueryStats() {
     </Box>
   )
 }
-

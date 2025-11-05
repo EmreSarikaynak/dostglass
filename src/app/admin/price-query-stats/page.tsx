@@ -22,9 +22,8 @@ export default async function PriceQueryStatsPage() {
           Bayilerin ve kullanıcıların fiyat sorgulama davranışlarını takip edin
         </Typography>
 
-        <PriceQueryStats />
+        <PriceQueryStats showHeader={false} />
       </Box>
     </AdminLayout>
   )
 }
-

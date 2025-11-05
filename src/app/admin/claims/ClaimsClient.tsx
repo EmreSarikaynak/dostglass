@@ -47,7 +47,11 @@ const STATUS_LABELS: Record<string, { label: string; color: 'default' | 'warning
   cancelled: { label: 'İptal', color: 'error' }
 }
 
-export default function ClaimsClient() {
+interface ClaimsClientProps {
+  userRole?: 'admin' | 'bayi'
+}
+
+export default function ClaimsClient({ userRole = 'admin' }: ClaimsClientProps) {
   const router = useRouter()
   const [claims, setClaims] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,32 +123,52 @@ export default function ClaimsClient() {
     }
   }
 
+  const canManage = userRole === 'admin'
+
   const columns: GridColDef[] = [
-    {
-      field: 'actions',
-      headerName: 'İşlemler',
-      width: 150,
-      sortable: false,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={0.5}>
-          <Tooltip title="Görüntüle">
-            <IconButton size="small" color="info" onClick={() => handleView(params.row.id)}>
-              <ViewIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Düzenle">
-            <IconButton size="small" color="primary" onClick={() => handleEdit(params.row.id)}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Sil">
-            <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      )
-    },
+    ...(canManage
+      ? [
+          {
+            field: 'actions',
+            headerName: 'İşlemler',
+            width: 150,
+            sortable: false,
+            renderCell: (params) => (
+              <Stack direction="row" spacing={0.5}>
+                <Tooltip title="Görüntüle">
+                  <IconButton size="small" color="info" onClick={() => handleView(params.row.id)}>
+                    <ViewIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Düzenle">
+                  <IconButton size="small" color="primary" onClick={() => handleEdit(params.row.id)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Sil">
+                  <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            ),
+          },
+        ]
+      : [
+          {
+            field: 'view',
+            headerName: 'Görüntüle',
+            width: 120,
+            sortable: false,
+            renderCell: (params) => (
+              <Tooltip title="İncele">
+                <IconButton size="small" color="info" onClick={() => handleView(params.row.id)}>
+                  <ViewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ),
+          },
+        ]),
     {
       field: 'claim_number',
       headerName: 'İhbar No',
@@ -270,30 +294,39 @@ export default function ClaimsClient() {
         </Stack>
       </Card>
 
-      {/* DataGrid */}
-      <Card>
-        <DataGrid
-          rows={claims}
-          columns={columns}
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[10, 25, 50, 100]}
-          rowCount={totalCount}
-          paginationMode="server"
-          loading={loading}
-          disableRowSelectionOnClick
-          autoHeight
-          sx={{
-            '& .MuiDataGrid-cell:focus': {
-              outline: 'none'
-            },
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: 'action.hover'
-            }
-          }}
-        />
-      </Card>
+      {totalCount === 0 && !loading ? (
+        <Card sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom fontWeight={600}>
+            Henüz bir ihbar yok
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Yeni ihbar oluşturmak için yukarıdaki &quot;Yeni İhbar&quot; butonunu kullanabilirsiniz.
+          </Typography>
+        </Card>
+      ) : (
+        <Card>
+          <DataGrid
+            rows={claims}
+            columns={columns}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 25, 50, 100]}
+            rowCount={totalCount}
+            paginationMode="server"
+            loading={loading}
+            disableRowSelectionOnClick
+            autoHeight
+            sx={{
+              '& .MuiDataGrid-cell:focus': {
+                outline: 'none'
+              },
+              '& .MuiDataGrid-row:hover': {
+                backgroundColor: 'action.hover'
+              }
+            }}
+          />
+        </Card>
+      )}
     </Box>
   )
 }
-

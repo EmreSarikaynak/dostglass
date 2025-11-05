@@ -6,7 +6,11 @@ import { ClaimFormClient } from './ClaimFormClient'
 export default async function NewClaimPage() {
   const user = await getUserAndRole()
 
-  if (!user || user.role !== 'admin') {
+  if (!user) {
+    redirect('/login')
+  }
+
+  if (user.role !== 'admin' && user.role !== 'bayi') {
     redirect('/')
   }
 
@@ -16,4 +20,3 @@ export default async function NewClaimPage() {
     </AdminLayout>
   )
 }
-

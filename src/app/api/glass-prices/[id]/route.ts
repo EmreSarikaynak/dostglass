@@ -55,11 +55,37 @@ export async function PUT(
 
     // View'den gelen ek alanları temizle
     const allowedFields = [
-      'product_code', 'stock_name', 'supplier', 'category', 'position_text',
-      'features', 'price_colorless', 'price_colored', 'price_double_color',
-      'thickness_mm', 'width_mm', 'height_mm', 'area_m2', 'hole_info',
-      'has_camera', 'has_sensor', 'is_encapsulated', 'is_active',
-      'vehicle_brand_id', 'vehicle_model_id'
+      'product_code',
+      'stock_name',
+      'supplier',
+      'category',
+      'position_text',
+      'features',
+      'price_colorless',
+      'price_colored',
+      'price_double_color',
+      'thickness_mm',
+      'width_mm',
+      'height_mm',
+      'area_m2',
+      'hole_info',
+      'has_camera',
+      'has_sensor',
+      'is_encapsulated',
+      'is_active',
+      'vehicle_category_id',
+      'vehicle_brand_id',
+      'vehicle_model_id',
+      'glass_position_id',
+      'glass_type_id',
+      'glass_brand_id',
+      'glass_color_id',
+      'notes',
+      'is_acoustic',
+      'is_heated',
+      'alternative_codes',
+      'model_year_start',
+      'model_year_end',
     ]
     
     const cleanedData = Object.keys(updateData)
@@ -130,4 +156,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }
-

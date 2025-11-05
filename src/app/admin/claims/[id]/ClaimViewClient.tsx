@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Box,
@@ -105,11 +105,7 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchClaim()
-  }, [claimId])
-
-  const fetchClaim = async () => {
+  const fetchClaim = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/claims/${claimId}`)
@@ -126,7 +122,11 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [claimId])
+
+  useEffect(() => {
+    fetchClaim()
+  }, [fetchClaim])
 
   const handleExportPDF = () => {
     if (!claim) return
@@ -418,5 +418,3 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
     </Box>
   )
 }
-
-

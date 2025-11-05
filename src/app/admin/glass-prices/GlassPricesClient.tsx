@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -32,10 +32,12 @@ import {
   Inventory,
   LocalOffer,
   Category,
-  CheckCircle
+  CheckCircle,
+  AddCircle,
 } from '@mui/icons-material'
 import { GlassPriceDetailed } from '@/types/glass-price'
 import { ExcelImportDialog } from './ExcelImportDialog'
+import { NewGlassDialog } from './NewGlassDialog'
 
 export function GlassPricesClient() {
   const [glassPrices, setGlassPrices] = useState<GlassPriceDetailed[]>([])
@@ -45,27 +47,19 @@ export function GlassPricesClient() {
   const [filterSupplier, setFilterSupplier] = useState('')
   const [filterStatus, setFilterStatus] = useState('') // '', 'active', 'inactive'
   const [openImportDialog, setOpenImportDialog] = useState(false)
+  const [openNewDialog, setOpenNewDialog] = useState(false)
   const [selectedItem, setSelectedItem] = useState<GlassPriceDetailed | null>(null)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [suppliers, setSuppliers] = useState<string[]>([])
   const [categories, setCategories] = useState<string[]>([])
 
-  useEffect(() => {
-    loadSupplierAndCategories()
-  }, [])
-
-  useEffect(() => {
-    loadGlassPrices()
-  }, [filterCategory, filterSupplier, filterStatus])
-
-  const loadSupplierAndCategories = async () => {
+  const loadSupplierAndCategories = useCallback(async () => {
     try {
       const res = await fetch('/api/glass-prices?detailed=true')
       const data = await res.json()
       const allItems = (data.data || []) as Array<Record<string, unknown>>
 
-      // Benzersiz tedarikçiler
       const uniqueSuppliers = Array.from(
         new Set(
           allItems
@@ -78,7 +72,6 @@ export function GlassPricesClient() {
       ).sort((a, b) => a.localeCompare(b))
       setSuppliers(uniqueSuppliers)
 
-      // Benzersiz kategoriler
       const uniqueCategories = Array.from(
         new Set(
           allItems
@@ -93,9 +86,13 @@ export function GlassPricesClient() {
     } catch (error) {
       console.error('Tedarikçi/Kategori yükleme hatası:', error)
     }
-  }
+  }, [])
 
-  const loadGlassPrices = async () => {
+  useEffect(() => {
+    loadSupplierAndCategories()
+  }, [loadSupplierAndCategories])
+
+  const loadGlassPrices = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -121,7 +118,11 @@ export function GlassPricesClient() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filterCategory, filterSupplier, filterStatus])
+
+  useEffect(() => {
+    loadGlassPrices()
+  }, [loadGlassPrices])
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -188,6 +189,7 @@ export function GlassPricesClient() {
       const updatePayload = {
         product_code: selectedItem.product_code,
         stock_name: selectedItem.stock_name,
+        alternative_codes: selectedItem.alternative_codes || null,
         supplier: selectedItem.supplier,
         category: selectedItem.category,
         position_text: selectedItem.position_text,
@@ -203,7 +205,19 @@ export function GlassPricesClient() {
         has_camera: selectedItem.has_camera,
         has_sensor: selectedItem.has_sensor,
         is_encapsulated: selectedItem.is_encapsulated,
+        is_acoustic: selectedItem.is_acoustic,
+        is_heated: selectedItem.is_heated,
         is_active: selectedItem.is_active,
+        model_year_start: selectedItem.model_year_start,
+        model_year_end: selectedItem.model_year_end,
+        notes: selectedItem.notes,
+        vehicle_category_id: selectedItem.vehicle_category_id,
+        vehicle_brand_id: selectedItem.vehicle_brand_id,
+        vehicle_model_id: selectedItem.vehicle_model_id,
+        glass_position_id: selectedItem.glass_position_id,
+        glass_type_id: selectedItem.glass_type_id,
+        glass_brand_id: selectedItem.glass_brand_id,
+        glass_color_id: selectedItem.glass_color_id,
       }
 
       const response = await fetch(`/api/glass-prices/${selectedItem.id}`, {
@@ -455,14 +469,36 @@ export function GlassPricesClient() {
     },
   ]
 
+  const handleCreateSuccess = () => {
+    setOpenNewDialog(false)
+    loadGlassPrices()
+    loadSupplierAndCategories()
+  }
+
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'stretch', sm: 'center' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Typography variant="h5" fontWeight={600}>
           💎 Cam Fiyat Listesi
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            startIcon={<AddCircle />}
+            onClick={() => setOpenNewDialog(true)}
+          >
+            Yeni Cam Ekle
+          </Button>
           <Button 
             variant="outlined" 
             startIcon={<Download />} 
@@ -472,6 +508,7 @@ export function GlassPricesClient() {
           </Button>
           <Button 
             variant="contained" 
+            color="secondary"
             startIcon={<Upload />} 
             onClick={() => setOpenImportDialog(true)}
           >
@@ -863,6 +900,14 @@ export function GlassPricesClient() {
           }}
         />
       </Card>
+
+      <NewGlassDialog
+        open={openNewDialog}
+        onClose={() => setOpenNewDialog(false)}
+        onSuccess={handleCreateSuccess}
+        suppliers={suppliers}
+        categories={categories}
+      />
 
       {/* Import Dialog */}
       <ExcelImportDialog

@@ -32,6 +32,10 @@ export async function GET(request: NextRequest) {
       .eq('tenant_id', user.tenantId)
       .order('created_at', { ascending: false })
 
+    if (user.role === 'bayi') {
+      query = query.eq('created_by', user.userId)
+    }
+
     if (status) {
       query = query.eq('status', status)
     }
@@ -151,4 +155,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
-

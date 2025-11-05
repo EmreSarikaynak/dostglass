@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -34,7 +34,7 @@ interface District {
 
 export function CreateUserForm() {
   const router = useRouter()
-  const supabase = supabaseBrowser()
+  const supabase = useMemo(() => supabaseBrowser(), [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<'admin' | 'bayi'>('bayi')
@@ -82,7 +82,7 @@ export function CreateUserForm() {
     }
 
     fetchCities()
-  }, [])
+  }, [supabase])
 
   // İl seçildiğinde ilçeleri yükle
   useEffect(() => {
@@ -107,7 +107,7 @@ export function CreateUserForm() {
       setDistricts([])
       setDistrict('')
     }
-  }, [selectedCityId])
+  }, [selectedCityId, supabase])
 
   // İl değiştiğinde
   const handleCityChange = (cityName: string) => {
@@ -471,4 +471,3 @@ export function CreateUserForm() {
     </Box>
   )
 }
-

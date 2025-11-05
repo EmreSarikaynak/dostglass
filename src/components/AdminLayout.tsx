@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import {
   Box,
   Drawer,
@@ -40,6 +40,8 @@ import {
   Search,
   Analytics,
   Business,
+  Receipt,
+  MailOutline,
 } from '@mui/icons-material'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseClient'
@@ -49,6 +51,13 @@ import Image from 'next/image'
 
 const drawerWidth = 280
 
+interface MenuItem {
+  text: string
+  icon: ReactNode
+  path?: string
+  action?: 'logout'
+}
+
 interface AdminLayoutProps {
   children: React.ReactNode
   userEmail?: string
@@ -56,42 +65,35 @@ interface AdminLayoutProps {
   userRole?: 'admin' | 'bayi'
 }
 
-const getMenuItems = (role?: 'admin' | 'bayi') => {
-  const baseItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
-  ]
-  
-  // Fiyat modülü - hem admin hem bayi için
-  const priceItems = [
-    { text: 'Fiyat Sorgulama', icon: <Search />, path: role === 'admin' ? '/admin/price-query' : '/bayi/price-query' },
-    { text: 'Cam Fiyat Listesi', icon: <AttachMoney />, path: '/admin/glass-prices' },
-  ]
-  
-  // Admin-only items
-  const adminItems = [
-    { text: 'Kullanıcı Yönetimi', icon: <People />, path: '/admin/users' },
-    { text: 'Sigorta Şirketleri', icon: <Business />, path: '/admin/insurance-companies' },
-    { text: 'Sorgulama Analizi', icon: <Analytics />, path: '/admin/price-query-stats' }, // SADECE ADMIN
-  ]
-  
-  // Bayi için Duyurular ve Anlaşmalı Sigorta Şirketleri menüsü
-  const bayiItems = [
-    { text: 'Anlaşmalı Sigorta Şirketleri', icon: <Business />, path: '/bayi/insurance-partners' },
-    { text: 'Duyurular', icon: <Campaign />, path: '/announcements' },
-  ]
-  
-  const commonItems = [
-    { text: 'Yeni İhbar', icon: <Assignment />, path: '/admin/claims/new' },
-    { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
-    { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
-    { text: 'Poliçeler', icon: <Description />, path: '/admin/policies' },
-  ]
-  
+const getMenuItems = (role?: 'admin' | 'bayi'): MenuItem[] => {
   if (role === 'admin') {
-    return [...baseItems, ...priceItems, ...adminItems, ...commonItems]
-  } else {
-    return [...baseItems, ...priceItems, ...bayiItems, ...commonItems]
+    return [
+      { text: 'Anasayfa', icon: <Dashboard />, path: '/admin' },
+      { text: 'Fiyat Sorgulama', icon: <Search />, path: '/admin/price-query' },
+      { text: 'Cam Fiyat Listesi', icon: <AttachMoney />, path: '/admin/glass-prices' },
+      { text: 'Kullanıcı Yönetimi', icon: <People />, path: '/admin/users' },
+      { text: 'Sigorta Şirketleri', icon: <Business />, path: '/admin/insurance-companies' },
+      { text: 'Sorgulama Analizi', icon: <Analytics />, path: '/admin/price-query-stats' },
+      { text: 'Yeni İhbar', icon: <Assignment />, path: '/admin/claims/new' },
+      { text: 'İhbar Listesi', icon: <Assignment />, path: '/admin/claims' },
+      { text: 'Araç Kayıtları', icon: <DirectionsCar />, path: '/admin/vehicles' },
+      { text: 'Poliçeler', icon: <Description />, path: '/admin/policies' },
+    ]
   }
+
+  return [
+    { text: 'Yeni İhbar Oluştur', icon: <Assignment />, path: '/bayi/claims/new' },
+    { text: 'İhbar Listesi', icon: <Assignment />, path: '/bayi/claims' },
+    { text: 'Orjinal Cam Talebi', icon: <AttachMoney />, path: '/bayi/orjinal-cam-talebi' },
+    { text: 'Orjinal Cam Talep Listesi', icon: <AttachMoney />, path: '/bayi/orjinal-cam-talep-listesi' },
+    { text: 'Fiyat Hesaplama', icon: <Search />, path: '/bayi/fiyat-hesaplama' },
+    { text: 'Duyurular', icon: <Campaign />, path: '/announcements' },
+    { text: 'Sigorta Şirketleri', icon: <Business />, path: '/bayi/insurance-partners' },
+    { text: 'Fatura Bilgileri', icon: <Receipt />, path: '/bayi/fatura-bilgileri' },
+    { text: 'Yansıtma Bilgileri', icon: <Analytics />, path: '/bayi/yansitma-bilgileri' },
+    { text: 'Gelen Mesajlar', icon: <MailOutline />, path: '/bayi/mesajlar' },
+    { text: 'Güvenli Çıkış Yap', icon: <Logout />, action: 'logout' },
+  ]
 }
 
 const settingsSubMenu = [
@@ -107,11 +109,13 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
   const { mode, toggleColorMode } = useColorMode()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const settingsAccessible = userRole === 'admin'
   const [settingsOpen, setSettingsOpen] = useState(
-    pathname.startsWith('/admin/settings') || 
-    pathname.startsWith('/admin/general-settings') || 
-    pathname.startsWith('/admin/vehicle-management') ||
-    pathname.startsWith('/admin/announcements')
+    settingsAccessible &&
+      (pathname.startsWith('/admin/settings') ||
+        pathname.startsWith('/admin/general-settings') ||
+        pathname.startsWith('/admin/vehicle-management') ||
+        pathname.startsWith('/admin/announcements'))
   )
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [siteTitle, setSiteTitle] = useState('DostlarGlass')
@@ -300,12 +304,80 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
       {/* Ana Menü Items */}
       <List sx={{ px: 2, py: 2 }}>
         {menuItems.map((item) => {
-          const isActive = pathname === item.path
+          const isActive = item.path ? pathname === item.path : false
+          const isLogout = item.action === 'logout'
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={() => router.push(item.path)}
-                selected={isActive}
+                onClick={() => {
+                  if (item.action === 'logout') {
+                    handleLogout()
+                  } else if (item.path) {
+                    router.push(item.path)
+                  }
+                }}
+                selected={item.path ? isActive : false}
+                sx={{
+                  borderRadius: 2,
+                  transition: 'all 0.2s ease-in-out',
+                  ...(isLogout
+                    ? {
+                        mt: 2,
+                        bgcolor: mode === 'dark' ? 'error.dark' : 'error.main',
+                        color: 'white',
+                        boxShadow: '0 2px 8px rgba(211, 47, 47, 0.25)',
+                        '& .MuiListItemIcon-root': {
+                          color: 'white',
+                        },
+                        '&:hover': {
+                          bgcolor: mode === 'dark' ? 'error.main' : 'error.dark',
+                        },
+                      }
+                    : {
+                        '&.Mui-selected': {
+                          bgcolor: mode === 'dark' ? '#025691' : '#025691',
+                          color: 'white',
+                          boxShadow: '0 2px 8px rgba(2, 86, 145, 0.25)',
+                          '&:hover': {
+                            bgcolor: mode === 'dark' ? '#0373C4' : '#002C50',
+                          },
+                          '& .MuiListItemIcon-root': {
+                            color: 'white',
+                          },
+                        },
+                        '&:hover': {
+                          bgcolor: mode === 'dark'
+                            ? 'rgba(2, 86, 145, 0.15)'
+                            : 'rgba(2, 86, 145, 0.08)',
+                        },
+                      }),
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 40,
+                    color: isLogout ? 'white' : isActive ? 'white' : 'inherit',
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          )
+        })}
+
+        {settingsAccessible && (
+          <>
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => setSettingsOpen(!settingsOpen)}
+                selected={
+                  pathname.startsWith('/admin/settings') ||
+                  pathname.startsWith('/admin/general-settings') ||
+                  pathname.startsWith('/admin/vehicle-management') ||
+                  pathname.startsWith('/admin/announcements')
+                }
                 sx={{
                   borderRadius: 2,
                   transition: 'all 0.2s ease-in-out',
@@ -325,110 +397,113 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 40, color: isActive ? 'white' : 'inherit' }}>
-                  {item.icon}
+                <ListItemIcon
+                  sx={{
+                    minWidth: 40,
+                    color: (
+                      pathname.startsWith('/admin/settings') ||
+                      pathname.startsWith('/admin/general-settings') ||
+                      pathname.startsWith('/admin/vehicle-management') ||
+                      pathname.startsWith('/admin/announcements')
+                    )
+                      ? 'white'
+                      : 'inherit',
+                  }}
+                >
+                  <Settings />
                 </ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemText primary="Ayarlar" />
+                {settingsOpen ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
             </ListItem>
-          )
-        })}
 
-        {/* Ayarlar (Collapsible) */}
-        <ListItem disablePadding sx={{ mb: 0.5 }}>
-          <ListItemButton
-            onClick={() => setSettingsOpen(!settingsOpen)}
-            selected={
-              pathname.startsWith('/admin/settings') || 
-              pathname.startsWith('/admin/general-settings') || 
-              pathname.startsWith('/admin/vehicle-management') ||
-              pathname.startsWith('/admin/announcements')
-            }
-            sx={{
-              borderRadius: 2,
-              transition: 'all 0.2s ease-in-out',
-              '&.Mui-selected': {
-                bgcolor: mode === 'dark' ? '#025691' : '#025691',
-                color: 'white',
-                boxShadow: '0 2px 8px rgba(2, 86, 145, 0.25)',
-                '&:hover': {
-                  bgcolor: mode === 'dark' ? '#0373C4' : '#002C50',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: 'white',
-                },
-              },
-              '&:hover': {
-                bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.15)' : 'rgba(2, 86, 145, 0.08)',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ 
-              minWidth: 40, 
-              color: (pathname.startsWith('/admin/settings') || 
-                     pathname.startsWith('/admin/general-settings') || 
-                     pathname.startsWith('/admin/vehicle-management') ||
-                     pathname.startsWith('/admin/announcements')) ? 'white' : 'inherit' 
-            }}>
-              <Settings />
-            </ListItemIcon>
-            <ListItemText primary="Ayarlar" />
-            {settingsOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-
-        {/* Ayarlar Alt Menüleri */}
-        <Collapse in={settingsOpen} timeout="auto" unmountOnExit>
+            <Collapse in={settingsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {settingsSubMenu.map((subItem) => {
               const isActive = pathname === subItem.path
               return (
                 <ListItem key={subItem.text} disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
-                    onClick={() => router.push(subItem.path)}
-                    selected={isActive}
-                    sx={{
-                      pl: 4,
-                      borderRadius: 2,
-                      transition: 'all 0.2s ease-in-out',
-                      '&.Mui-selected': {
-                        bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.25)' : 'rgba(2, 86, 145, 0.12)',
-                        color: mode === 'dark' ? '#ffffff' : '#002C50',
-                        fontWeight: 600,
-                        borderLeft: mode === 'dark' ? '3px solid #025691' : '3px solid #025691',
-                        '&:hover': {
-                          bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.35)' : 'rgba(2, 86, 145, 0.2)',
-                        },
-                      },
-                      '&:hover': {
-                        bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <Tune sx={{ 
-                        color: isActive 
-                          ? (mode === 'dark' ? '#ffffff' : 'primary.dark') 
-                          : 'text.secondary', 
-                        fontSize: 20 
-                      }} />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={subItem.text}
-                      primaryTypographyProps={{
-                        fontSize: '0.9rem',
-                        color: isActive 
-                          ? (mode === 'dark' ? '#ffffff' : 'primary.dark') 
-                          : 'text.primary',
-                        fontWeight: isActive ? 600 : 400,
-                      }}
-                    />
-                  </ListItemButton>
+                        onClick={() => router.push(subItem.path)}
+                        selected={isActive}
+                        sx={{
+                          pl: 4,
+                          borderRadius: 2,
+                          transition: 'all 0.2s ease-in-out',
+                          '&.Mui-selected': {
+                            bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.25)' : 'rgba(2, 86, 145, 0.12)',
+                            color: mode === 'dark' ? '#ffffff' : '#002C50',
+                            fontWeight: 600,
+                            borderLeft: mode === 'dark' ? '3px solid #025691' : '3px solid #025691',
+                            '&:hover': {
+                              bgcolor: mode === 'dark' ? 'rgba(2, 86, 145, 0.35)' : 'rgba(2, 86, 145, 0.2)',
+                            },
+                          },
+                          '&:hover': {
+                            bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                          },
+                        }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 40 }}>
+                          <Tune
+                            sx={{
+                              color: isActive
+                                ? mode === 'dark'
+                                  ? '#ffffff'
+                                  : 'primary.dark'
+                                : 'text.secondary',
+                              fontSize: 20,
+                            }}
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={subItem.text}
+                          primaryTypographyProps={{
+                            fontSize: '0.9rem',
+                            color: isActive
+                              ? mode === 'dark'
+                                ? '#ffffff'
+                                : 'primary.dark'
+                              : 'text.primary',
+                            fontWeight: isActive ? 600 : 400,
+                          }}
+                        />
+                      </ListItemButton>
                 </ListItem>
               )
             })}
           </List>
         </Collapse>
+      </>
+    )}
+
+        {settingsAccessible && (
+          <ListItem disablePadding sx={{ mt: 1.5 }}>
+            <ListItemButton
+              onClick={handleLogout}
+              sx={{
+                borderRadius: 2,
+                bgcolor: mode === 'dark' ? 'error.dark' : 'error.main',
+                color: 'white',
+                boxShadow: '0 2px 8px rgba(211, 47, 47, 0.25)',
+                '& .MuiListItemIcon-root': {
+                  color: 'white',
+                },
+                '&:hover': {
+                  bgcolor: mode === 'dark' ? 'error.main' : 'error.dark',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <Logout />
+              </ListItemIcon>
+              <ListItemText
+                primary="Güvenli Çıkış Yap"
+                primaryTypographyProps={{ fontWeight: 600 }}
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
       </List>
     </Box>
   )
@@ -614,4 +689,3 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
     </Box>
   )
 }
-

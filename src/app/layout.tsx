@@ -8,13 +8,22 @@ export const revalidate = 5
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSystemSettings()
-  
+
   // Cache bypass için timestamp ekle
   const timestamp = Date.now()
-  const faviconUrl = settings.favicon_url 
-    ? `${settings.favicon_url}?v=${timestamp}` 
+  const rawFaviconUrl = settings.favicon_url || ''
+  const faviconUrl = rawFaviconUrl
+    ? `${rawFaviconUrl}?v=${timestamp}`
     : '/favicon.ico'
-  
+  const faviconType =
+    rawFaviconUrl.endsWith('.svg')
+      ? 'image/svg+xml'
+      : rawFaviconUrl.endsWith('.jpeg') || rawFaviconUrl.endsWith('.jpg')
+        ? 'image/jpeg'
+        : rawFaviconUrl.endsWith('.ico')
+          ? 'image/x-icon'
+          : 'image/png'
+
   return {
     title: settings.site_title || 'DostlarGlass',
     description: settings.site_description || 'Cam Montaj ve Yönetim Sistemi',
@@ -23,19 +32,21 @@ export async function generateMetadata(): Promise<Metadata> {
         {
           url: faviconUrl,
           sizes: '32x32',
-          type: 'image/png',
+          type: faviconType,
         },
         {
           url: faviconUrl,
           sizes: '16x16',
-          type: 'image/png',
+          type: faviconType,
         },
       ],
       shortcut: faviconUrl,
       apple: {
         url: settings.site_logo_url || faviconUrl,
         sizes: '180x180',
-        type: 'image/png',
+        type: settings.site_logo_url?.endsWith('.svg')
+          ? 'image/svg+xml'
+          : 'image/png',
       },
     },
     manifest: '/manifest.json',

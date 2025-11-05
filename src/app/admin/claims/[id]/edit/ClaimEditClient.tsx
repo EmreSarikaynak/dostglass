@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, CircularProgress, Alert, Button } from '@mui/material'
 import { ArrowBack as BackIcon } from '@mui/icons-material'
@@ -16,11 +16,7 @@ export default function ClaimEditClient({ claimId }: { claimId: string }) {
     items: ClaimItem[]
   } | null>(null)
 
-  useEffect(() => {
-    fetchClaim()
-  }, [claimId])
-
-  const fetchClaim = async () => {
+  const fetchClaim = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/claims/${claimId}`)
@@ -99,7 +95,11 @@ export default function ClaimEditClient({ claimId }: { claimId: string }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [claimId])
+
+  useEffect(() => {
+    fetchClaim()
+  }, [fetchClaim])
 
   const handleSuccess = () => {
     router.push(`/admin/claims/${claimId}`)
@@ -134,5 +134,4 @@ export default function ClaimEditClient({ claimId }: { claimId: string }) {
     />
   )
 }
-
 

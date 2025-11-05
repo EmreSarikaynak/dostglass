@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Card,
@@ -34,11 +34,7 @@ export function InsuranceCompaniesManagement() {
   const [selectedCompany, setSelectedCompany] = useState<InsuranceCompany | null>(null)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
 
-  useEffect(() => {
-    loadCompanies()
-  }, [])
-
-  const loadCompanies = async () => {
+  const loadCompanies = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/parameters/insurance_companies')
@@ -55,7 +51,11 @@ export function InsuranceCompaniesManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadCompanies()
+  }, [loadCompanies])
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity })
@@ -249,4 +249,3 @@ export function InsuranceCompaniesManagement() {
     </Box>
   )
 }
-

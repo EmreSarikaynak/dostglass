@@ -18,7 +18,7 @@ export async function PUT(
 
     const { id: userId } = await params
     const body = await request.json()
-    const { email, role, tenantId, dealerInfo } = body
+    const { email, role, tenantId, dealerInfo, password } = body
 
     if (!userId || !email || !role || !tenantId) {
       return NextResponse.json(
@@ -27,18 +27,28 @@ export async function PUT(
       )
     }
 
+    if (password && password.length < 6) {
+      return NextResponse.json(
+        { error: 'Şifre en az 6 karakter olmalıdır' },
+        { status: 400 }
+      )
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
 
     // Email güncelle
-    const { error: emailError } = await supabaseAdmin.auth.admin.updateUserById(
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
-      { email }
+      {
+        email,
+        ...(password ? { password } : {}),
+      }
     )
 
-    if (emailError) {
-      console.error('Email güncelleme hatası:', emailError)
+    if (authError) {
+      console.error('Kullanıcı bilgisi güncelleme hatası:', authError)
       return NextResponse.json(
-        { error: 'Email güncellenirken hata oluştu' },
+        { error: 'Kullanıcı bilgileri güncellenirken hata oluştu' },
         { status: 500 }
       )
     }
@@ -128,4 +138,3 @@ export async function PUT(
     )
   }
 }
-

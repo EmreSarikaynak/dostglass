@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -70,13 +70,15 @@ interface District {
 
 export function EditUserForm({ user, tenants }: EditUserFormProps) {
   const router = useRouter()
-  const supabase = supabaseBrowser()
+  const supabase = useMemo(() => supabaseBrowser(), [])
   const [email, setEmail] = useState(user.email)
   const [role, setRole] = useState<'admin' | 'bayi'>(user.role as 'admin' | 'bayi')
   const [tenantId, setTenantId] = useState(user.tenantId)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   // İl ve İlçe state'leri
   const [cities, setCities] = useState<City[]>([])
@@ -117,7 +119,7 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
     }
 
     fetchCities()
-  }, [])
+  }, [supabase, city])
 
   // İl seçildiğinde ilçeleri yükle
   useEffect(() => {
@@ -139,7 +141,7 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
     } else {
       setDistricts([])
     }
-  }, [selectedCityId])
+  }, [selectedCityId, supabase])
 
   // İl değiştiğinde
   const handleCityChange = (cityName: string) => {
@@ -157,10 +159,23 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
     setLoading(true)
 
     try {
+      if ((password || confirmPassword) && password !== confirmPassword) {
+        setError('Şifreler eşleşmiyor.')
+        setLoading(false)
+        return
+      }
+
+      if (password && password.length < 6) {
+        setError('Şifre en az 6 karakter olmalıdır.')
+        setLoading(false)
+        return
+      }
+
       interface RequestBody {
         email: string
         role: 'admin' | 'bayi'
         tenantId: string
+        password?: string
         dealerInfo?: {
           companyName: string
           contactPerson: string
@@ -182,6 +197,10 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
         email,
         role,
         tenantId,
+      }
+
+      if (password) {
+        requestBody.password = password
       }
 
       // Eğer bayi ise ek bilgileri ekle
@@ -220,6 +239,8 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
       }
 
       setSuccess('Kullanıcı başarıyla güncellendi!')
+      setPassword('')
+      setConfirmPassword('')
       setLoading(false)
 
       setTimeout(() => {
@@ -312,6 +333,28 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
                       ))}
                     </Select>
                   </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Yeni Şifre"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    helperText="Boş bırakılırsa şifre değişmez"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Yeni Şifre (Tekrar)"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    helperText="Yeni şifreyi doğrulayın"
+                  />
                 </Grid>
               </Grid>
 
@@ -481,4 +524,3 @@ export function EditUserForm({ user, tenants }: EditUserFormProps) {
     </Box>
   )
 }
-
