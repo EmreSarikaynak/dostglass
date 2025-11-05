@@ -5,12 +5,13 @@ import { EditUserForm } from './EditUserForm'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditUserPage({ params }: PageProps) {
+  const { id } = await params
   const user = await getUserAndRole()
 
   if (!user || user.role !== 'admin') {
@@ -20,7 +21,7 @@ export default async function EditUserPage({ params }: PageProps) {
   const supabaseAdmin = getSupabaseAdmin()
 
   // Kullanıcı bilgilerini getir
-  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(params.id)
+  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(id)
   
   if (!authUser.user) {
     redirect('/admin/users')
@@ -36,7 +37,7 @@ export default async function EditUserPage({ params }: PageProps) {
         name
       )
     `)
-    .eq('user_id', params.id)
+    .eq('user_id', id)
     .single()
 
   const tenant = userTenant?.tenants as unknown as { id: string; name: string } | null
@@ -47,7 +48,7 @@ export default async function EditUserPage({ params }: PageProps) {
     const { data: dealer } = await supabaseAdmin
       .from('dealers')
       .select('*')
-      .eq('user_id', params.id)
+      .eq('user_id', id)
       .maybeSingle()
     
     dealerInfo = dealer
@@ -74,4 +75,3 @@ export default async function EditUserPage({ params }: PageProps) {
     </AdminLayout>
   )
 }
-

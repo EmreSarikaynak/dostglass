@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUserAndRole } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
-// Cloudflare Pages requires Edge runtime
-export const runtime = 'edge'
-
 export async function POST(request: NextRequest) {
   try {
     // Admin kontrolü

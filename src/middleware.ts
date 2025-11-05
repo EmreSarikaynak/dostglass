@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// Edge Runtime için export (Next.js 15'te hala experimental)
+// Middleware için Edge Runtime (Next.js 15'te experimental)
 export const runtime = 'experimental-edge'
 
 export async function middleware(request: NextRequest) {

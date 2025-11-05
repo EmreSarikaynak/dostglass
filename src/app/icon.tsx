@@ -1,35 +1,14 @@
 import { ImageResponse } from 'next/og'
-import { getSystemSettings } from '@/lib/getSystemSettings'
 
-export const runtime = 'edge'
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Next.js metadata API için icon export
+export const size = {
+  width: 32,
+  height: 32,
+}
+export const contentType = 'image/png'
 
-export async function GET() {
-  try {
-    const settings = await getSystemSettings()
-    
-    if (settings.favicon_url) {
-      // Supabase'den favicon'i fetch et ve döndür
-      const response = await fetch(settings.favicon_url)
-      
-      if (response.ok) {
-        const blob = await response.blob()
-        const arrayBuffer = await blob.arrayBuffer()
-        
-        return new Response(arrayBuffer, {
-          headers: {
-            'Content-Type': response.headers.get('content-type') || 'image/png',
-            'Cache-Control': 'public, max-age=300, s-maxage=300',
-          },
-        })
-      }
-    }
-  } catch (error) {
-    console.error('Icon error:', error)
-  }
-  
-  // Varsayılan olarak basit bir favicon oluştur
+// Default export - Next.js metadata API'nin gerektirdiği format
+export default function Icon() {
   return new ImageResponse(
     (
       <div
@@ -49,8 +28,7 @@ export async function GET() {
       </div>
     ),
     {
-      width: 32,
-      height: 32,
+      ...size,
     }
   )
 }
