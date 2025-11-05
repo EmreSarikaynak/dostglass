@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+// Edge Runtime için export
+export const runtime = 'edge'
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -10,12 +13,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Asset routes
+  // Asset routes - daha kapsamlı kontrol
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname.includes('.')
+    pathname.startsWith('/images') ||
+    pathname.startsWith('/uploads') ||
+    pathname.includes('.') && !pathname.endsWith('/')
   ) {
     return NextResponse.next()
   }
@@ -49,31 +54,38 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  // Kimlik doğrulama kontrolü
-  if (!session) {
+    // Kimlik doğrulama kontrolü
+    if (!session) {
+      const redirectUrl = new URL('/login', request.url)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Admin route kontrolü
+    if (pathname.startsWith('/admin')) {
+      const { data, error } = await supabase
+        .from('user_tenants')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (error || data?.role !== 'admin') {
+        const redirectUrl = new URL('/', request.url)
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+
+    return response
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // Hata durumunda login'e yönlendir
     const redirectUrl = new URL('/login', request.url)
     return NextResponse.redirect(redirectUrl)
   }
-
-  // Admin route kontrolü
-  if (pathname.startsWith('/admin')) {
-    const { data, error } = await supabase
-      .from('user_tenants')
-      .select('role')
-      .eq('user_id', session.user.id)
-      .single()
-
-    if (error || data?.role !== 'admin') {
-      const redirectUrl = new URL('/', request.url)
-      return NextResponse.redirect(redirectUrl)
-    }
-  }
-
-  return response
 }
 
 export const config = {
@@ -83,8 +95,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public files (images, etc)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-
