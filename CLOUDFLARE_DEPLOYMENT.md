@@ -22,15 +22,25 @@
 
 Cloudflare Dashboard'da projenize gidin ve **Settings > Environment Variables** bölümünden aşağıdaki değişkenleri ekleyin:
 
+**ÖNEMLİ NOT:** Environment değişkenleri eklerken:
+- **"Encrypt" kutucuğunu KAPATIK** bırakın (normal değişkenler için)
+- Sadece `SUPABASE_SERVICE_ROLE` için **"Encrypt" kutucuğunu AÇIK** tutun
+- Her değişkeni hem **Production** hem de **Preview** için ekleyin
+
 **Production Environment Variables:**
+
+**Normal Değişkenler (Encrypt KAPALI):**
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://cuxgnskbdmolbvaatlif.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1eGduc2tiZG1vbGJ2YWF0bGlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MDMzOTksImV4cCI6MjA3NjE3OTM5OX0.w2kAhZOq1F-ivKTz7iHLyC0JXpLG5RwbqyHnQPRBJn8
-SUPABASE_SERVICE_ROLE=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1eGduc2tiZG1vbGJ2YWF0bGlmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDYwMzM5OSwiZXhwIjoyMDc2MTc5Mzk5fQ.9OUoVlkO3Rulr1nkoSnQVOzzMsT-D6RbFM-AetQgwfk
 NEXT_PUBLIC_APP_NAME=DostGlass
+NODE_VERSION=20
 ```
 
-⚠️ **ÖNEMLİ:** Bu değişkenleri hem **Production** hem de **Preview** environmentları için ekleyin.
+**Secret Değişken (Encrypt AÇIK):**
+```
+SUPABASE_SERVICE_ROLE=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1eGduc2tiZG1vbGJ2YWF0bGlmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDYwMzM5OSwiZXhwIjoyMDc2MTc5Mzk5fQ.9OUoVlkO3Rulr1nkoSnQVOzzMsT-D6RbFM-AetQgwfk
+```
 
 ### 2. Build Command'ı Güncelleyin
 
@@ -51,12 +61,6 @@ npm run build:cf
 /
 ```
 
-### 3. Node.js Versiyonunu Ayarlayın
-
-Cloudflare Pages Settings > Environment Variables bölümüne ekleyin:
-```
-NODE_VERSION=20
-```
 
 ### 4. Compatibility Flags
 
