@@ -54,5 +54,3 @@ export async function GET() {
     }
   )
 }
-
-export default GET
