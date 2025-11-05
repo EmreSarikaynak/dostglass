@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// Edge Runtime için export
-export const runtime = 'edge'
+// Edge Runtime için export (Next.js 15'te hala experimental)
+export const runtime = 'experimental-edge'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
