@@ -106,11 +106,13 @@ export async function PUT(
 
       // Yeni kalemleri ekle
       if (body.items.length > 0) {
-        const items = body.items.map((item: any) => ({
-          ...item,
-          claim_id: id,
-          id: undefined // Yeni ID oluşturulsun
-        }))
+        const items = body.items.map((item: Record<string, unknown>) => {
+          const { id: _clientItemId, ...rest } = item
+          return {
+            ...rest,
+            claim_id: id,
+          }
+        })
 
         const { error: itemsError } = await supabase
           .from('claim_items')
@@ -183,4 +185,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
   }
 }
-

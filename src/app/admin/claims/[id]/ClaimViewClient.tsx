@@ -51,6 +51,8 @@ interface ClaimDetail {
   policy_end_date: string
   incident_city_id: string
   incident_district_id: string
+  incident_city?: { id: string; name: string | null }
+  incident_district?: { id: string; name: string | null }
   insured_name: string
   insured_tax_office: string
   insured_tax_number: string
@@ -104,6 +106,8 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
   const [claim, setClaim] = useState<ClaimDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [cities, setCities] = useState<Array<{ id: string; name: string | null }>>([])
+  const [districts, setDistricts] = useState<Array<{ id: string; name: string | null }>>([])
 
   const fetchClaim = useCallback(async () => {
     try {
@@ -124,9 +128,44 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
     }
   }, [claimId])
 
+  const fetchCities = useCallback(async () => {
+    try {
+      const response = await fetch('/api/cities')
+      const result = await response.json()
+      if (response.ok) {
+        setCities(result.data || [])
+      }
+    } catch (error) {
+      console.error('Cities fetch error:', error)
+    }
+  }, [])
+
+  const fetchDistricts = useCallback(async (cityId: string) => {
+    if (!cityId) {
+      setDistricts([])
+      return
+    }
+    try {
+      const response = await fetch(`/api/districts?cityId=${cityId}`)
+      const result = await response.json()
+      if (response.ok) {
+        setDistricts(result.data || [])
+      }
+    } catch (error) {
+      console.error('Districts fetch error:', error)
+    }
+  }, [])
+
   useEffect(() => {
     fetchClaim()
-  }, [fetchClaim])
+    fetchCities()
+  }, [fetchClaim, fetchCities])
+
+  useEffect(() => {
+    if (claim?.incident_city_id) {
+      fetchDistricts(claim.incident_city_id)
+    }
+  }, [claim?.incident_city_id, fetchDistricts])
 
   const handleExportPDF = () => {
     if (!claim) return
@@ -261,7 +300,11 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
               <InfoRow label="Olay Türü" value={claim.incident_types?.name} />
               <InfoRow label="Hasar Türü" value={claim.damage_types?.name} />
               <InfoRow label="Olay Tarihi" value={claim.incident_date ? new Date(claim.incident_date).toLocaleDateString('tr-TR') : '-'} />
-              <InfoRow label="Olay Yeri (İl/İlçe)" value="-" />
+              <InfoRow label="Olay Yeri (İl/İlçe)" value={
+                claim.incident_city && claim.incident_district 
+                  ? `${claim.incident_city.name || ''} / ${claim.incident_district.name || ''}`
+                  : '-'
+              } />
             </Stack>
           </Card>
         </Box>

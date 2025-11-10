@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -18,15 +18,8 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { tr } from 'date-fns/locale'
-import dynamic from 'next/dynamic'
 import { supabaseBrowser } from '@/lib/supabaseClient'
-import 'react-quill-new/dist/quill.snow.css'
-
-// React Quill'i dynamically import et (SSR sorunları için)
-const ReactQuill = dynamic(() => import('react-quill-new'), { 
-  ssr: false,
-  loading: () => <Box sx={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Yükleniyor...</Box>
-})
+import { HTMLEditor } from '@/components/HTMLEditor'
 
 interface AnnouncementModalProps {
   open: boolean
@@ -297,4 +290,3 @@ export function AnnouncementModal({ open, onClose, onSave, announcement }: Annou
     </LocalizationProvider>
   )
 }
-

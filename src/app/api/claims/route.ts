@@ -109,11 +109,13 @@ export async function POST(request: NextRequest) {
 
     // Cam kalemlerini ekle
     if (body.items && body.items.length > 0) {
-      const items = body.items.map((item: any) => ({
-        ...item,
-        claim_id: claim.id,
-        id: undefined // ID'yi temizle
-      }))
+      const items = body.items.map((item: Record<string, unknown>) => {
+        const { id: _clientItemId, ...rest } = item
+        return {
+          ...rest,
+          claim_id: claim.id,
+        }
+      })
 
       console.log('📦 Cam kalemleri ekleniyor:', items.length, 'adet')
 

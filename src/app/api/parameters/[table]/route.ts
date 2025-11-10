@@ -31,19 +31,32 @@ export async function GET(
     const user = await getUserAndRole()
     const onlyActive = searchParams.get('only_active') === 'true' || (user && user.role !== 'admin')
     
-    let query = supabase.from(table).select('*').order('created_at', { ascending: false })
+    let query = supabase.from(table).select('*')
     
-    // Aktif kayıt filtresi (admin değilse veya only_active parametresi varsa)
-    if (onlyActive && ['insurance_companies', 'insured_types', 'incident_types', 'damage_types', 'license_classes', 'vehicle_usage_types', 'glass_brands', 'glass_colors', 'glass_operations', 'installation_methods', 'service_locations', 'vehicle_glass_types', 'glass_positions'].includes(table)) {
-      query = query.eq('is_active', true)
+    // Cities için özel sıralama ve filtreleme
+    if (table === 'cities') {
+      query = query.order('name', { ascending: true })
+      if (onlyActive) {
+        query = query.eq('is_active', true)
+      }
     }
-    
-    // İlçeler için il bilgisini de getir
-    if (table === 'districts') {
+    // Districts için özel işlem
+    else if (table === 'districts') {
       const cityId = searchParams.get('city_id')
-      query = supabase.from(table).select('*, cities(name)').order('created_at', { ascending: false })
+      query = supabase.from(table).select('*, cities(name)').order('name', { ascending: true })
       if (cityId) {
         query = query.eq('city_id', cityId)
+      }
+      if (onlyActive) {
+        query = query.eq('is_active', true)
+      }
+    }
+    // Diğer tablolar için varsayılan sıralama
+    else {
+      query = query.order('created_at', { ascending: false })
+      // Aktif kayıt filtresi (admin değilse veya only_active parametresi varsa)
+      if (onlyActive && ['insurance_companies', 'insured_types', 'incident_types', 'damage_types', 'license_classes', 'vehicle_usage_types', 'glass_brands', 'glass_colors', 'glass_operations', 'installation_methods', 'service_locations', 'vehicle_glass_types', 'glass_positions'].includes(table)) {
+        query = query.eq('is_active', true)
       }
     }
     

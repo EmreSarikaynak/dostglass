@@ -14,6 +14,10 @@ const ADMIN_PASSWORD = 'Emre%&Sarkay23!'
 const TENANT_NAME = 'Secesta'
 
 async function seedAdmin() {
+  console.log('🔍 Debug bilgileri:')
+  console.log('SUPABASE_URL:', SUPABASE_URL ? '✅ Mevcut' : '❌ Yok')
+  console.log('SUPABASE_SERVICE_ROLE:', SUPABASE_SERVICE_ROLE ? '✅ Mevcut' : '❌ Yok')
+  
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE) {
     console.error('❌ Hata: NEXT_PUBLIC_SUPABASE_URL ve SUPABASE_SERVICE_ROLE env değişkenleri gereklidir')
     process.exit(1)
@@ -147,4 +151,3 @@ async function seedAdmin() {
 }
 
 seedAdmin()
-

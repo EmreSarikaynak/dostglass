@@ -31,6 +31,7 @@ export const getDesignTokens = (mode: PaletteMode) => ({
     divider: mode === 'light' ? 'rgba(0, 44, 80, 0.12)' : 'rgba(255, 255, 255, 0.12)',
   },
   typography: {
+    fontSize: 14,
     fontFamily: [
       '-apple-system',
       'BlinkMacSystemFont',
@@ -41,39 +42,38 @@ export const getDesignTokens = (mode: PaletteMode) => ({
       'sans-serif',
     ].join(','),
     h1: {
-      fontSize: '2.5rem',
+      fontSize: '2.1rem',
+      fontWeight: 600,
       '@media (max-width:600px)': {
-        fontSize: '2rem',
+        fontSize: '1.8rem',
       },
     },
     h2: {
-      fontSize: '2rem',
+      fontSize: '1.8rem',
+      fontWeight: 600,
       '@media (max-width:600px)': {
-        fontSize: '1.75rem',
+        fontSize: '1.55rem',
       },
     },
     h3: {
-      fontSize: '1.75rem',
+      fontSize: '1.5rem',
+      fontWeight: 600,
       '@media (max-width:600px)': {
-        fontSize: '1.5rem',
+        fontSize: '1.35rem',
       },
     },
     h4: {
-      fontSize: '1.5rem',
-      '@media (max-width:600px)': {
-        fontSize: '1.25rem',
-      },
-    },
-    h5: {
       fontSize: '1.25rem',
+      fontWeight: 500,
       '@media (max-width:600px)': {
-        fontSize: '1.1rem',
+        fontSize: '1.15rem',
       },
     },
     h6: {
-      fontSize: '1rem',
+      fontSize: '0.95rem',
+      fontWeight: 500,
       '@media (max-width:600px)': {
-        fontSize: '0.9rem',
+        fontSize: '0.85rem',
       },
     },
   },
@@ -96,4 +96,3 @@ export const createAppTheme = (mode: PaletteMode) => {
     datePickersTrTR
   )
 }
-

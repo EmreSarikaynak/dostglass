@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Box,
   Card,
@@ -57,23 +57,19 @@ export function DashboardClient() {
   const [charts, setCharts] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadDashboardData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true)
     try {
-      // İstatistikleri yükle
-      const statsResponse = await fetch(`/api/dashboard/stats?period=${period}`)
+      const [statsResponse, chartsResponse] = await Promise.all([
+        fetch(`/api/dashboard/stats?period=${period}`),
+        fetch(`/api/dashboard/charts?period=${period}`),
+      ])
+
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
         setStats(statsData.stats)
       }
 
-      // Grafik verilerini yükle
-      const chartsResponse = await fetch(`/api/dashboard/charts?period=${period}`)
       if (chartsResponse.ok) {
         const chartsData = await chartsResponse.json()
         setCharts(chartsData)
@@ -83,7 +79,11 @@ export function DashboardClient() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [period])
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])
 
   const handlePeriodChange = (_event: React.MouseEvent<HTMLElement>, newPeriod: string | null) => {
     if (newPeriod !== null) {

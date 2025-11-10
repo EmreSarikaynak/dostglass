@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Card,
@@ -35,12 +35,7 @@ export function AnnouncementsListClient({ userRole }: { userRole: UserRole }) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadAnnouncements()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const loadAnnouncements = async () => {
+  const loadAnnouncements = useCallback(async () => {
     try {
       const supabase = supabaseBrowser()
       const now = new Date().toISOString()
@@ -68,7 +63,11 @@ export function AnnouncementsListClient({ userRole }: { userRole: UserRole }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userRole])
+
+  useEffect(() => {
+    loadAnnouncements()
+  }, [loadAnnouncements])
 
   const stripHtml = (html: string) => {
     const tmp = document.createElement('DIV')
@@ -191,4 +190,3 @@ export function AnnouncementsListClient({ userRole }: { userRole: UserRole }) {
     </Box>
   )
 }
-

@@ -14,6 +14,7 @@ import { GridColDef } from '@mui/x-data-grid'
 import { ParameterTable } from '@/components/settings/ParameterTable'
 import { ParameterModal, FieldConfig } from '@/components/settings/ParameterModal'
 import { DeleteConfirmDialog } from '@/components/settings/DeleteConfirmDialog'
+import { InsuranceCompanyDialog } from '@/app/admin/insurance-companies/InsuranceCompanyDialog'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -42,8 +43,8 @@ const parameterConfigs = {
       { name: 'code', label: 'Kod', type: 'text', required: true },
       { name: 'name', label: 'Şirket Adı', type: 'text', required: true },
       { name: 'logo_url', label: 'Logo URL', type: 'text', required: false },
-      { name: 'work_procedure', label: 'Çalışma Prosedürü (Markdown)', type: 'textarea', required: false, rows: 6 },
-      { name: 'required_documents', label: 'Matbuu Evraklar (Markdown)', type: 'textarea', required: false, rows: 6 },
+      { name: 'work_procedure', label: 'Çalışma Prosedürü', type: 'html', required: false, rows: 18 },
+      { name: 'required_documents', label: 'Matbuu Evraklar', type: 'html', required: false, rows: 12 },
       { name: 'is_active', label: 'Aktif', type: 'switch' },
     ] as FieldConfig[],
   },
@@ -178,6 +179,8 @@ export function SettingsClient() {
   const [data, setData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [modalOpen, setModalOpen] = useState(false)
+  const [insuranceDialogOpen, setInsuranceDialogOpen] = useState(false)
+  const [selectedInsurance, setSelectedInsurance] = useState<Record<string, unknown> | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [currentTable, setCurrentTable] = useState('')
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null)
@@ -226,14 +229,24 @@ export function SettingsClient() {
   }
 
   const handleAdd = () => {
-    setEditingItem(null)
     setCurrentTable(currentTableKey)
+    if (currentTableKey === 'insurance_companies') {
+      setSelectedInsurance(null)
+      setInsuranceDialogOpen(true)
+      return
+    }
+    setEditingItem(null)
     setModalOpen(true)
   }
 
   const handleEdit = (row: Record<string, unknown>) => {
-    setEditingItem(row)
     setCurrentTable(currentTableKey)
+    if (currentTableKey === 'insurance_companies') {
+      setSelectedInsurance(row)
+      setInsuranceDialogOpen(true)
+      return
+    }
+    setEditingItem(row)
     setModalOpen(true)
   }
 
@@ -367,15 +380,29 @@ export function SettingsClient() {
         </Box>
       </Box>
 
-      <ParameterModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        initialData={editingItem || undefined}
-        fields={config.fields}
-        title={editingItem ? `${config.title} Düzenle` : `Yeni ${config.title} Ekle`}
-        relatedData={relatedData}
-      />
+      {currentTableKey !== 'insurance_companies' && (
+        <ParameterModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSave={handleSave}
+          initialData={editingItem || undefined}
+          fields={config.fields}
+          title={editingItem ? `${config.title} Düzenle` : `Yeni ${config.title} Ekle`}
+          relatedData={relatedData}
+        />
+      )}
+
+      {currentTableKey === 'insurance_companies' && (
+        <InsuranceCompanyDialog
+          open={insuranceDialogOpen}
+          company={selectedInsurance as any}
+          onClose={() => setInsuranceDialogOpen(false)}
+          onSuccess={() => {
+            setInsuranceDialogOpen(false)
+            loadData('insurance_companies')
+          }}
+        />
+      )}
 
       <DeleteConfirmDialog
         open={deleteDialogOpen}
@@ -401,4 +428,3 @@ export function SettingsClient() {
     </>
   )
 }
-

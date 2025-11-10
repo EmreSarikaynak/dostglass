@@ -16,7 +16,7 @@ export default async function BayiNewClaimPage() {
 
   return (
     <AdminLayout userEmail={user.email} tenantName={user.tenantName} userRole={user.role}>
-      <ClaimFormClient />
+      <ClaimFormClient redirectPath="/bayi/claims" />
     </AdminLayout>
   )
 }

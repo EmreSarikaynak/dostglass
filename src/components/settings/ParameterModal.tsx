@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,7 @@ import {
   Switch,
   Autocomplete,
 } from '@mui/material'
+import { HTMLEditor } from '@/components/HTMLEditor'
 
 interface ParameterModalProps {
   open: boolean
@@ -27,7 +28,7 @@ interface ParameterModalProps {
 export interface FieldConfig {
   name: string
   label: string
-  type: 'text' | 'textarea' | 'switch' | 'select'
+  type: 'text' | 'textarea' | 'switch' | 'select' | 'html'
   required?: boolean
   rows?: number // textarea için satır sayısı
   relatedTable?: string // İlişkisel alan için hangi tablodan veri çekileceği
@@ -44,6 +45,15 @@ export function ParameterModal({
   relatedData = {},
 }: ParameterModalProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>({})
+  const htmlEditorIds = useMemo(() => {
+    const ids: Record<string, string> = {}
+    fields.forEach((field) => {
+      if (field.type === 'html') {
+        ids[field.name] = `${field.name}-html-editor`
+      }
+    })
+    return ids
+  }, [fields])
 
   useEffect(() => {
     if (initialData) {
@@ -135,6 +145,19 @@ export function ParameterModal({
               )
             }
 
+            if (field.type === 'html') {
+              return (
+                <HTMLEditor
+                  key={field.name}
+                  label={field.label}
+                  value={String(formData[field.name] || '')}
+                  onChange={(val) => handleChange(field.name, val)}
+                  rows={field.rows || 18}
+                  editorId={htmlEditorIds[field.name]}
+                />
+              )
+            }
+
               return (
                 <TextField
                   key={field.name}
@@ -157,4 +180,3 @@ export function ParameterModal({
     </Dialog>
   )
 }
-

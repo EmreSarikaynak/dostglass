@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import {
   Box,
   Drawer,
@@ -121,7 +121,7 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
   const [siteTitle, setSiteTitle] = useState('DostlarGlass')
   const [userId, setUserId] = useState<string | null>(null)
   
-  const menuItems = getMenuItems(userRole)
+  const menuItems = useMemo(() => getMenuItems(userRole), [userRole])
 
   // Sistem ayarlarını ve kullanıcı ID'sini çek
   useEffect(() => {
@@ -149,6 +149,14 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
     fetchSettings()
     fetchUserId()
   }, [])
+
+  useEffect(() => {
+    menuItems.forEach((item) => {
+      if (item.path?.startsWith('/')) {
+        router.prefetch(item.path)
+      }
+    })
+  }, [menuItems, router])
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -313,7 +321,12 @@ export function AdminLayout({ children, userEmail, tenantName, userRole }: Admin
                   if (item.action === 'logout') {
                     handleLogout()
                   } else if (item.path) {
-                    router.push(item.path)
+                    if (pathname !== item.path) {
+                      router.push(item.path)
+                    }
+                    if (mobileOpen) {
+                      setMobileOpen(false)
+                    }
                   }
                 }}
                 selected={item.path ? isActive : false}

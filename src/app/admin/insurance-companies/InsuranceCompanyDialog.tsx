@@ -318,6 +318,7 @@ export function InsuranceCompanyDialog({ open, company, onClose, onSuccess }: Pr
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
               required
+              helperText="Raporlar ve entegrasyonlar için kullanılan benzersiz kısa kod"
               fullWidth
             />
 
@@ -387,12 +388,21 @@ export function InsuranceCompanyDialog({ open, company, onClose, onSuccess }: Pr
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
-          <HTMLEditor
-            value={formData.work_procedure}
-            onChange={(value) => setFormData({ ...formData, work_procedure: value })}
-            label="Çalışma Prosedürü"
-            rows={18}
-          />
+          <Stack spacing={2}>
+            <Alert severity="info">
+              Son düzenleme:{' '}
+              {company?.updated_at
+                ? new Date(company.updated_at).toLocaleString('tr-TR')
+                : 'Henüz kaydedilmedi'}
+            </Alert>
+            <HTMLEditor
+              value={formData.work_procedure}
+              onChange={(content) => setFormData({ ...formData, work_procedure: content })}
+              label="Çalışma Prosedürü"
+              rows={20}
+              onUpload={(file) => uploadFile(file, 'document')}
+            />
+          </Stack>
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
@@ -529,4 +539,3 @@ export function InsuranceCompanyDialog({ open, company, onClose, onSuccess }: Pr
     </Dialog>
   )
 }
-
