@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Paper,
@@ -33,19 +33,7 @@ export function BreakingNewsCarousel() {
   const [visible, setVisible] = useState(true)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadAnnouncements()
-    // Her 10 saniyede bir otomatik geçiş
-    const interval = setInterval(() => {
-      if (announcements.length > 1) {
-        setCurrentIndex((prev) => (prev + 1) % announcements.length)
-      }
-    }, 10000)
-
-    return () => clearInterval(interval)
-  }, [announcements.length])
-
-  const loadAnnouncements = async () => {
+  const loadAnnouncements = useCallback(async () => {
     try {
       const supabase = supabaseBrowser()
       const now = new Date().toISOString()
@@ -61,13 +49,31 @@ export function BreakingNewsCarousel() {
         .limit(5)
 
       if (error) throw error
-      setAnnouncements(data || [])
+      const nextAnnouncements = data || []
+      setAnnouncements(nextAnnouncements)
+      setCurrentIndex(0)
     } catch (error) {
       console.error('Duyurular yüklenirken hata:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadAnnouncements()
+  }, [loadAnnouncements])
+
+  useEffect(() => {
+    if (announcements.length <= 1) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % announcements.length)
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [announcements.length])
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % announcements.length)

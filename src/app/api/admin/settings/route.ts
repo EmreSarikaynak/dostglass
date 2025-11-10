@@ -6,6 +6,15 @@ import { clearSettingsCache } from '@/lib/getSystemSettings'
 // GET - Ayarları getir
 export async function GET() {
   try {
+    const user = await getUserAndRole()
+
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Bu işlem için yetkiniz yok' },
+        { status: 403 }
+      )
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
     
     const { data: settings, error } = await supabaseAdmin

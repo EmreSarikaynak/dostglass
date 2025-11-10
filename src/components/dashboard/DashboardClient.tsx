@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Box,
   Card,
@@ -57,33 +57,31 @@ export function DashboardClient() {
   const [charts, setCharts] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadDashboardData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true)
     try {
-      // İstatistikleri yükle
-      const statsResponse = await fetch(`/api/dashboard/stats?period=${period}`)
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData.stats)
-      }
+      const [statsResponse, chartsResponse] = await Promise.all([
+        fetch(`/api/dashboard/stats?period=${period}`),
+        fetch(`/api/dashboard/charts?period=${period}`),
+      ])
 
-      // Grafik verilerini yükle
-      const chartsResponse = await fetch(`/api/dashboard/charts?period=${period}`)
-      if (chartsResponse.ok) {
-        const chartsData = await chartsResponse.json()
-        setCharts(chartsData)
-      }
+      const statsData = statsResponse.ok ? await statsResponse.json() : null
+      const chartsData = chartsResponse.ok ? await chartsResponse.json() : null
+
+      setStats(statsData?.stats ?? null)
+      setCharts(chartsData ?? null)
     } catch (error) {
       console.error('Dashboard verileri yüklenirken hata:', error)
+      setStats(null)
+      setCharts(null)
     } finally {
       setLoading(false)
     }
-  }
+  }, [period])
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])
 
   const handlePeriodChange = (_event: React.MouseEvent<HTMLElement>, newPeriod: string | null) => {
     if (newPeriod !== null) {
