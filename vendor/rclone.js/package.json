@@ -1,0 +1,10 @@
+{
+  "name": "rclone.js",
+  "version": "0.6.6",
+  "description": "Offline-friendly shim for rclone.js used by @opennextjs/cloudflare",
+  "bin": {
+    "rclone": "bin/rclone.js"
+  },
+  "type": "module",
+  "license": "MIT"
+}

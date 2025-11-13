@@ -58,5 +58,8 @@
     "tsx": "^4.20.6",
     "typescript": "^5",
     "wrangler": "^4.45.3"
+  },
+  "overrides": {
+    "rclone.js": "file:vendor/rclone.js"
   }
 }
