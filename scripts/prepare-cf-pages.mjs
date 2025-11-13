@@ -14,7 +14,7 @@ const workerDestination = path.join(assetsDir, "_worker.js");
 async function main() {
   try {
     await access(workerSource, constants.R_OK);
-  } catch (error) {
+  } catch {
     console.warn(
       "[prepare-cf-pages] OpenNext worker.js not found; skipping copy step."
     );

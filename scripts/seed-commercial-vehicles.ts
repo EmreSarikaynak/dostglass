@@ -394,6 +394,11 @@ async function main() {
 
       let brandId: string
 
+      if (brandError) {
+        console.error(`   ❌ Marka sorgulanamadı: ${brandName}`, brandError)
+        continue
+      }
+
       if (brand) {
         brandId = brand.id
         console.log(`   ↳ Marka zaten var: ${brandName}`)
