@@ -1,0 +1,126 @@
+Original Cam Talebi Modülü – Uygulama Komutu
+===========================================
+
+Bu komuttaki tüm maddeler sırayla ve eksiksiz uygulanacaktır. Sorulmadan gerekli veriler veritabanından okunacak, tanımlanan tablolar oluşturulacak, UI ve API görevleri tamamlanacaktır.
+
+1. Veritabanı Tasarımı
+   1.1. Yeni tablo `case_files`
+        - Kolonlar: id (uuid, pk), tenant_id (uuid, fk tenants.id), case_number (text, unique, format `DOS-YYYY-#####`), section (text, default `original_glass`), status (text, default `open`), created_at (timestamptz default now), created_by (uuid fk auth.users).
+        - RLS: tenant izolasyonu; bayi sadece kendi case kayıtlarını okuyabilmeli, admin tüm kayıtları görebilmeli.
+   1.2. Yeni tablo `original_glass_requests`
+        - Kolonlar: id (uuid pk), tenant_id, case_file_id (fk case_files.id), request_number (text unique, format `ORJ-YYYY-#####`), dealer_id (fk user_tenants.id), created_by (uuid fk auth.users), assigned_admin_id (nullable fk user_tenants.id), status (enum: pending|processing|fulfilled|rejected), request_reason_id (fk original_glass_request_reasons.id), promised_delivery_days (int), promised_delivery_date (date), notes (text), response_notes (text), created_at, updated_at.
+        - Araç/Sigorta alanları: plate, chassis_no, model_year, vehicle_brand_id, vehicle_model_id, vehicle_submodel, glass_type_id, glass_color_id, glass_features, euro_code, insurance_company_id, policy_number, policy_type, insured_name, insured_phone, claim_number, glass_part_code, glass_price (numeric 12,2), discount_rate (numeric 5,2), currency (text), termin_date.
+        - Trigger: `generate_original_glass_request_number()` request_number üretimi; promised_delivery_date hesabı.
+        - RLS: tenant + bayi kendi kayıtlarını görebilir, admin hepsini yönetir.
+   1.3. Parametrik tablo `original_glass_request_reasons`
+        - Kolonlar: id, tenant_id, name, is_active, created_at.
+        - Seed: Acenta Talebi, Müşteri Talebi, Sigorta Talebi, Yerli Üretim Stoğunun Bulunmaması, Yerli Üretim Olmaması.
+   1.4. Dosya tablosu `original_glass_request_files`
+        - Kolonlar: id, tenant_id, request_id (fk original_glass_requests), uploader_id (fk auth.users), storage_key, file_name, mime_type, size, description, visibility (enum tenant|admin), created_at.
+        - RLS: tenant + request sahibinin erişimi, admin tam erişim.
+   1.5. Log tablosu `original_glass_request_logs`
+        - Kolonlar: id, tenant_id, request_id, actor_id, action (status_change|note|file_upload), payload (jsonb), created_at.
+        - Kullanım: tüm durum değişiklikleri, not eklemeleri, dosya yükleme kayıtları.
+   1.6. Fonksiyon & Trigger
+        - `generate_case_number(section text)` case_files case_number üretsin (yıla göre sıfırlanan sekans).
+        - `generate_original_glass_request_number()` request_number için benzer format.
+        - `set_promised_delivery_date()` promised_delivery_days > 0 ise termin_date hesaplasın.
+   1.7. Migration Sırası
+        - case_files → original_glass_requests → reasons → files → logs → fonksiyonlar → RLS policy’leri → seed verileri.
+
+2. API Geliştirme
+   2.1. POST `/api/original-glass-requests`
+        - Role: bayi.
+        - İş akışı: case_files kaydı oluştur, request kaydı oluştur, log ekle (`status_change` pending), response body’de case_number + request_number döndür.
+   2.2. GET `/api/original-glass-requests`
+        - Bayi: sadece `dealer_id = current_user` kayıtları; pagination (limit/offset).
+   2.3. GET `/api/original-glass-requests/:id`
+        - Bayi sadece kendi kaydını görür; admin herkesinkini.
+   2.4. PATCH `/api/original-glass-requests/:id`
+        - Bayi: sadece `notes`, `promised_delivery_days` (pending durumunda) güncelleyebilir.
+        - Admin: `status`, `assigned_admin_id`, `response_notes`, `promised_delivery_days`, `termin_date`.
+        - Her değişiklikte log kaydı oluştur.
+   2.5. GET `/api/admin/original-glass-requests`
+        - Filtreler: status, dealer_id, created_at range, request_reason_id.
+   2.6. Dosya Servisi
+        - POST `/api/original-glass-requests/:id/files`: storage upload (Supabase storage veya R2), metadata kaydı, log (`file_upload`).
+        - DELETE `/api/original-glass-requests/:id/files/:fileId`: yalnızca uploader (aynı tenant) veya admin.
+        - GET `/api/original-glass-requests/:id/files`: dosya listesi.
+   2.7. Log Servisi
+        - GET `/api/original-glass-requests/:id/logs`: kronolojik event listesi.
+   2.8. Ortak Guard
+        - `getUserAndRole` + `ensureTenantAccess` helper’ı; tüm endpointlerde tenant kontrolü.
+
+3. Ön Uç – Bayi Ekranları
+   3.1. Sayfa `/bayi/orjinal-cam-talebi/new`
+        - Bileşen `OriginalGlassRequestForm`.
+        - Fetch: talep nedenleri, sigorta şirketleri, araç marka/model, cam tip/renk.
+        - Otomatik doldurma: bayi adı (disable), yetkili (current user), tarih (bugün).
+        - Validasyon: zorunlu alanlar (talep nedeni, plaka, marka, cam tip, sigorta, telefon), numeric alanlar, telefon maskesi.
+        - Form submission: API çağrısı, success sonrası yönlendirme ve bilgi mesajı (“Dosya yükleme işlemi talep sonrasında yapılır”).
+   3.2. Sayfa `/bayi/orjinal-cam-talep-listesi`
+        - Tablo bileşeni: kolonlar case_number, request_number, tarih, durum, marka/model, termin.
+        - Aksiyon butonları: Detay, Dosya Yükle, (opsiyonel) Güncelle.
+        - Pagination + filtre (status).
+   3.3. Detay sayfası `/bayi/orjinal-cam-talep/:id`
+        - Form read-only, durum badgesi, termin bilgisi, admin notu, dosya listesi, log listesi.
+        - “Dosya Yükle” butonu (modal).
+   3.4. Dosya Yükleme Modalı
+        - Drag-drop, progress, çoklu dosya, açıklama alanı.
+        - Başarılı yükleme → tabloda güncelle, log kaydı göster.
+
+4. Ön Uç – Admin Ekranları
+   4.1. Sayfa `/admin/orjinal-cam-talepleri`
+        - Filtre paneli (status, dealer, tarih aralığı, talep nedeni).
+        - Tablo: case_number, request_number, bayi adı, durum, oluşturma tarihi, assigned admin, termin.
+        - Satır aksiyonları: Görüntüle, Durum Güncelle, Dosyalar (modal).
+        - Export (CSV) butonu.
+   4.2. Detay sayfası `/admin/orjinal-cam-talepleri/:id`
+        - Tabs: Talep Bilgisi, Dosyalar, Loglar.
+        - Durum güncelleme paneli: dropdown status, assigned admin seçici, response_notes metni.
+        - Log bileşeni: kronolojik timeline.
+   4.3. Admin Dosya Yönetimi
+        - Admin dosya ekleyebilir (teklif pdf vs.), silebilir; bayi yüklediği dosyaları görüntüler.
+
+5. Storage & Dosya Yönetimi
+   5.1. Storage Bucket
+        - Bucket adı: `original_glass_files`.
+        - Path formatı: `tenantId/requestId/filename`.
+        - Politika: sadece imzalı URL ile erişim (signed URL endpoint).
+   5.2. API İmzalı URL
+        - GET `/api/original-glass-requests/:id/files/:fileId/url` (isteğe bağlı) – kısa süreli download linki.
+   5.3. Dosya Boyut ve Tür Kontrolü
+        - Maksimum 10 MB, izin verilen uzantılar: pdf, jpg, png, docx, xlsx.
+
+6. Bildirimler & Otomasyon
+   6.1. Yeni talep oluşturulduğunda admin’e e-posta/Slack (Supabase Function veya webhook).
+   6.2. Durum değiştiğinde bayiye e-posta (talep ID, yeni durum, case number).
+   6.3. Günlük cron: promised_delivery_date yaklaşan talep için reminder; aynı anda admin panelindeki “Talepler” menüsünde görsel uyarı (yanıp sönen badge) ve dashboard widget’ında bekleyen talep sayısı güncellensin.
+
+7. Yetkilendirme ve RLS
+   7.1. `case_files` RLS – tenant bazlı; bayi erişimi case_file.created_by veya request.dealer_id eşleşiyorsa.
+   7.2. `original_glass_requests` RLS – bayi: dealer_id = current_user; admin rolü tam erişim.
+   7.3. `original_glass_request_files` RLS – tenant + request ilişkilendirmesi; admin tam erişim.
+   7.4. `original_glass_request_logs` RLS – tenant bazlı; bayi kendi request’lerine ait logları okur.
+
+8. Test & QA
+   8.1. Backend unit testleri: numara üretimi, API yetkilendirme, durum geçişleri.
+   8.2. Integration test: dosya upload akışı (metadata + storage), log yazımı.
+   8.3. E2E (Playwright): bayi talep oluşturur → dosya yükler → admin durum değiştirir → bayi güncel durumu görür.
+   8.4. Load test: admin liste endpointi (büyük veri seti), dosya upload concurrency.
+   8.5. QA checklist: responsive tasarım, form validasyonu, RLS ihlali yok, bildirimler gönderiliyor.
+
+9. Dokümantasyon & DevOps
+   9.1. README’ye yeni modül açıklaması, migration sırası, env değişkenleri.
+   9.2. Supabase migration scriptlerini sürüm kontrolüne ekle (case_files, requests, reasons, files, logs, triggers).
+   9.3. Seed script: talep nedenleri.
+   9.4. Deployment planı: migrations → backend → frontend → storage bucket oluşturma → seed → QA → production rollout.
+   9.5. Kullanıcı eğitim notu: bayi panelinde talep ve dosya yükleme nasıl yapılır.
+
+10. Gelecek Geliştirmeler (Backlog)
+   10.1. Talep → claim dönüşümü (request_id → claim_id).
+   10.2. SLA raporu ve dashboard widget (ortalama yanıt süreleri).
+   10.3. ERP/CRM entegrasyonu: stok/teklif senkronizasyonu.
+   10.4. Mobil uygulama uyumu için UI optimizasyonu (ilk etapta tamamlanacak).
+
+Not: Uygulamaya başlamadan önce bu komutu baştan sona oku, ardından adımları belirtilen sırayla tamamla ve sonucunu raporla.

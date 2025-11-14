@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Card,
@@ -30,6 +30,7 @@ import {
 } from '@mui/material'
 import { Add, Delete, Save, Search, ExpandMore, Phone } from '@mui/icons-material'
 import { ClaimFormData, ClaimItem, ParameterOption } from '@/types/claim'
+import Link from 'next/link'
 
 type VehicleCategoryInfo = {
   id?: string
@@ -62,8 +63,11 @@ type GlassOption = {
   glass_position_name?: string | null
   glass_position_id?: string | null
   glass_type_id?: string | null
+  glass_type_name?: string | null
   glass_brand_id?: string | null
+  glass_brand_name?: string | null
   glass_color_id?: string | null
+  glass_color_name?: string | null
   position_text?: string | null
   features?: string | null
   supplier?: string | null
@@ -73,6 +77,7 @@ type GlassOption = {
   has_camera?: boolean | null
   has_sensor?: boolean | null
   is_encapsulated?: boolean | null
+  is_active?: boolean | null
   [key: string]: unknown
 }
 
@@ -129,21 +134,23 @@ export default function ClaimForm({
   })
 
   const [items, setItems] = useState<ClaimItem[]>(initialItems || [])
-  const [currentItem, setCurrentItem] = useState<Partial<ClaimItem>>({
-    glass_position_id: '',
-    glass_type_id: '',
-    glass_brand_id: '',
+  const getInitialItem = (): Partial<ClaimItem> => ({
+    glass_position_id: null,
+    glass_type_id: null,
+    glass_brand_id: null,
     glass_code: '',
-    glass_color_id: '',
-    glass_operation_id: '',
-    installation_method_id: '',
-    service_location_id: '',
+    glass_color_id: null,
+    glass_operation_id: null,
+    installation_method_id: null,
+    service_location_id: null,
     unit_price: 0,
     quantity: 1,
     customer_contribution: false,
     additional_material_cost: 0,
     additional_material_reason: '',
   })
+
+  const [currentItem, setCurrentItem] = useState<Partial<ClaimItem>>(getInitialItem())
 
   // Parametrik veriler
   const [insuranceCompanies, setInsuranceCompanies] = useState<ParameterOption[]>([])
@@ -174,6 +181,9 @@ export default function ClaimForm({
   const [availableGlassPrices, setAvailableGlassPrices] = useState<GlassOption[]>([])
   const [glassSearchOptions, setGlassSearchOptions] = useState<GlassOption[]>([]) // Autocomplete için
   const [selectedGlass, setSelectedGlass] = useState<GlassOption | null>(null) // Araça uygun cam fiyatları
+  const vehicleGlassCache = useRef<Map<string, GlassOption[]>>(new Map())
+  const glassSearchCache = useRef<Map<string, GlassOption[]>>(new Map())
+  const [hasAttemptedGlassLookup, setHasAttemptedGlassLookup] = useState(false)
 
   // Parametrik verileri yükle
   useEffect(() => {
@@ -203,6 +213,22 @@ export default function ClaimForm({
     }
   }, [formData.vehicle_brand_id])
 
+  const dedupeGlassOptions = (glassList: GlassOption[]) => {
+    const uniqueMap = new Map<string, GlassOption>()
+    glassList.forEach((item, index) => {
+      if (!item) return
+      const key =
+        (item.id && `id:${String(item.id)}`) ||
+        (item.product_code && `code:${String(item.product_code)}`) ||
+        (item.stock_name && `name:${String(item.stock_name)}`) ||
+        `idx:${index}`
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, item)
+      }
+    })
+    return Array.from(uniqueMap.values())
+  }
+
   // Cam arama - Autocomplete için otomatik arama (debounced)
   useEffect(() => {
     // Arama yapılmıyorsa ve araç seçiliyse, o araca ait camları göster
@@ -213,6 +239,26 @@ export default function ClaimForm({
       } else {
         setGlassSearchOptions([])
       }
+      return
+    }
+
+    const normalizedQuery = glassSearchQuery.trim().toUpperCase()
+    if (!normalizedQuery) {
+      setGlassSearchOptions([])
+      return
+    }
+
+    const searchCacheKey = [
+      normalizedQuery,
+      formData.vehicle_model_id ? `model:${formData.vehicle_model_id}` : '',
+      formData.vehicle_brand_id ? `brand:${formData.vehicle_brand_id}` : '',
+    ]
+      .filter(Boolean)
+      .join('|')
+
+    if (glassSearchCache.current.has(searchCacheKey)) {
+      const cached = glassSearchCache.current.get(searchCacheKey) || []
+      setGlassSearchOptions(cached)
       return
     }
 
@@ -229,17 +275,19 @@ export default function ClaimForm({
         const data = await res.json()
         
         console.log('📦 Autocomplete bulunan cam sayısı:', data.data?.length || 0)
-        const options = (data.data || []) as GlassOption[]
+        const options = dedupeGlassOptions(((data.data || []) as GlassOption[]).filter(item => item?.is_active !== false))
+        glassSearchCache.current.set(searchCacheKey, options)
         setGlassSearchOptions(options)
       } catch (error) {
         console.error('❌ Autocomplete cam arama hatası:', error)
+        glassSearchCache.current.set(searchCacheKey, [])
         setGlassSearchOptions([])
       }
     }, 500) // 500ms bekle
 
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [glassSearchQuery])
+  }, [glassSearchQuery, availableGlassPrices, formData.vehicle_model_id, formData.vehicle_brand_id])
 
   // Sürücü sigortalı ile aynı checkbox'u
   useEffect(() => {
@@ -351,6 +399,8 @@ export default function ClaimForm({
     if (!vehicle) {
       setSelectedVehicle(null)
       setAvailableGlassPrices([]) // Camları temizle
+      setGlassSearchOptions([])
+      setHasAttemptedGlassLookup(false)
       return
     }
 
@@ -411,56 +461,203 @@ export default function ClaimForm({
   // 🎯 Araca uygun cam fiyatlarını çek
   const loadGlassPricesForVehicle = async (vehicleModelId: string) => {
     try {
-      // Seçilen aracın brand ve model adını al
       const vehicle = allVehicles.find(v => v.id === vehicleModelId)
       if (!vehicle) {
         console.warn('⚠️ Araç bulunamadı')
         return
       }
 
-      const brandName = String(
-        vehicle.vehicle_brands?.name ??
-        vehicle.brand_name ??
-        ''
-      )
-      const modelName = String(vehicle.name ?? '')
-      
-      // Marka adını sadeleştir: "Mercedes-Benz" → "MERCEDES", "BMW" → "BMW"
-      const simplifiedBrand = brandName
-        .toUpperCase()
-        .replace(/-/g, ' ')  // Tire kaldır
-        .replace(/\(.*?\)/g, '') // Parantez içini kaldır: "Mercedes-Benz (Ticari)" → "Mercedes-Benz"
-        .split(' ')[0]  // İlk kelimeyi al: "MERCEDES BENZ" → "MERCEDES"
-        .trim()
-      
-      console.log('🔍 Cam fiyatları aranıyor:', { 
-        brandName, 
-        modelName, 
-        simplifiedBrand 
-      })
-      
-      // stock_name'de sadeleştirilmiş marka adını ara
-      const searchTerm = simplifiedBrand
-      const url = `/api/glass-prices?detailed=true&search=${encodeURIComponent(searchTerm)}`
-      console.log('📡 API URL:', url)
-      
-      const res = await fetch(url)
-      const data = await res.json()
-      
-      console.log('📦 API Yanıtı:', data)
-      console.log('🎯 Bulunan cam sayısı:', data.data?.length || 0)
-      
-      const fetchedGlass = (data.data || []) as GlassOption[]
-      setAvailableGlassPrices(fetchedGlass)
-      
-      if (data.data && data.data.length > 0) {
-        showSnackbar(`✅ ${data.data.length} adet cam fiyatı bulundu`, 'success')
+      const brandId =
+        typeof vehicle.vehicle_brands?.id === 'string'
+          ? vehicle.vehicle_brands.id
+          : typeof vehicle.brand_id === 'string'
+            ? vehicle.brand_id
+            : ''
+
+      const brandName =
+        typeof vehicle.vehicle_brands?.name === 'string'
+          ? vehicle.vehicle_brands.name
+          : typeof vehicle.brand_name === 'string'
+            ? vehicle.brand_name
+            : ''
+
+      const modelName = typeof vehicle.name === 'string' ? vehicle.name : ''
+      const modelCacheKey = `model:${vehicleModelId}|${brandId || 'no-brand'}`
+      const brandCacheKey = brandId ? `brand:${brandId}` : null
+
+      setHasAttemptedGlassLookup(false)
+
+      if (vehicleGlassCache.current.has(modelCacheKey)) {
+        const cached = vehicleGlassCache.current.get(modelCacheKey) || []
+        setAvailableGlassPrices(cached)
+        setGlassSearchOptions(cached)
+        setHasAttemptedGlassLookup(true)
+
+        if (cached.length === 0) {
+          showSnackbar('⚠️ Bu araç için henüz cam fiyatı tanımlanmamış', 'warning')
+        } else {
+          showSnackbar(`ℹ️ Cam fiyatları önbellekten yüklendi (${cached.length})`, 'info')
+        }
+        return
+      }
+
+      const fetchGlassWithParams = async (paramMap: Record<string, string>, cacheKey?: string) => {
+        if (cacheKey && vehicleGlassCache.current.has(cacheKey)) {
+          return vehicleGlassCache.current.get(cacheKey) || []
+        }
+
+        const searchParams = new URLSearchParams({ detailed: 'true' })
+        Object.entries(paramMap).forEach(([key, value]) => {
+          if (value) {
+            searchParams.append(key, value)
+          }
+        })
+
+        const response = await fetch(`/api/glass-prices?${searchParams.toString()}`)
+        const json = await response.json()
+
+        if (!response.ok) {
+          throw new Error(json.error || 'Cam fiyatları yüklenemedi')
+        }
+
+        const result = ((json.data || []) as GlassOption[]).filter(item => item && item.is_active !== false)
+        if (cacheKey) {
+          vehicleGlassCache.current.set(cacheKey, result)
+        }
+        return result
+      }
+
+      let fetchedGlass: GlassOption[] = []
+      let dataSource: 'model' | 'brand' | 'search' | null = null
+      let usedFallbackTerm: string | null = null
+
+      // 1️⃣ Model + Marka kombinasyonu ile dene
+      if (vehicleModelId) {
+        fetchedGlass = await fetchGlassWithParams(
+          {
+            vehicle_model_id: vehicleModelId,
+            ...(brandId ? { vehicle_brand_id: brandId } : {}),
+          },
+          modelCacheKey
+        )
+
+        if (fetchedGlass.length > 0) {
+          dataSource = 'model'
+        }
+      }
+
+      // 2️⃣ Model kaydı yoksa sadece marka ID'siyle ara
+      if ((!fetchedGlass || fetchedGlass.length === 0) && brandId) {
+        if (brandCacheKey && vehicleGlassCache.current.has(brandCacheKey)) {
+          fetchedGlass = vehicleGlassCache.current.get(brandCacheKey) || []
+        } else {
+          fetchedGlass = await fetchGlassWithParams({ vehicle_brand_id: brandId }, brandCacheKey || undefined)
+        }
+        if (fetchedGlass.length > 0) {
+          dataSource = 'brand'
+        }
+      }
+
+      // 3️⃣ Hâlâ sonuç yoksa marka/model isimleriyle metin araması yap
+      if (!fetchedGlass || fetchedGlass.length === 0) {
+        const fallbackTerms = new Set<string>()
+        if (brandName) fallbackTerms.add(brandName)
+        if (modelName) fallbackTerms.add(modelName)
+
+        for (const term of fallbackTerms) {
+          const simplified = term
+            .toUpperCase()
+            .replace(/-/g, ' ')
+            .replace(/\(.*?\)/g, '')
+            .split(' ')[0]
+            .trim()
+
+          if (!simplified) continue
+
+          const searchKey = [
+            simplified,
+            brandId ? `brand:${brandId}` : '',
+            vehicleModelId ? `model:${vehicleModelId}` : '',
+          ]
+            .filter(Boolean)
+            .join('|')
+
+          if (glassSearchCache.current.has(searchKey)) {
+            const cachedSearch = glassSearchCache.current.get(searchKey) || []
+            if (cachedSearch.length > 0) {
+              fetchedGlass = cachedSearch
+              dataSource = 'search'
+              usedFallbackTerm = simplified
+              break
+            }
+            continue
+          }
+
+          const fallbackParams = new URLSearchParams({
+            detailed: 'true',
+            search: simplified,
+          })
+
+          const fallbackUrl = `/api/glass-prices?${fallbackParams.toString()}`
+          console.log('🔁 Fallback cam araması:', fallbackUrl)
+
+          const response = await fetch(fallbackUrl)
+          const json = await response.json()
+
+          if (!response.ok) {
+            throw new Error(json.error || 'Cam fiyatları yüklenemedi')
+          }
+
+          const fallbackGlass = ((json.data || []) as GlassOption[]).filter(item => item && item.is_active !== false)
+          glassSearchCache.current.set(searchKey, fallbackGlass)
+          if (fallbackGlass.length > 0) {
+            fetchedGlass = fallbackGlass
+            dataSource = 'search'
+            usedFallbackTerm = simplified
+            break
+          }
+        }
+      }
+
+      const dedupedGlass = dedupeGlassOptions(fetchedGlass || [])
+
+      vehicleGlassCache.current.set(modelCacheKey, dedupedGlass)
+      if (brandCacheKey) {
+        vehicleGlassCache.current.set(brandCacheKey, dedupedGlass)
+      }
+      if (dataSource === 'search' && usedFallbackTerm) {
+        const searchKey = [
+          usedFallbackTerm,
+          brandId ? `brand:${brandId}` : '',
+          vehicleModelId ? `model:${vehicleModelId}` : '',
+        ]
+          .filter(Boolean)
+          .join('|')
+        glassSearchCache.current.set(searchKey, dedupedGlass)
+      }
+
+      setAvailableGlassPrices(dedupedGlass)
+      setGlassSearchOptions(dedupedGlass)
+      setHasAttemptedGlassLookup(true)
+
+      if (dedupedGlass.length > 0) {
+        if (dataSource === 'model') {
+          showSnackbar(`✅ ${dedupedGlass.length} adet cam fiyatı bulundu`, 'success')
+        } else if (dataSource === 'brand') {
+          showSnackbar(`ℹ️ Bu modele özel kayıt bulunamadı, ${dedupedGlass.length} cam marka bazında yüklendi`, 'info')
+        } else if (dataSource === 'search') {
+          showSnackbar(`ℹ️ Camlar metin araması ile bulundu (${dedupedGlass.length} kayıt)`, 'info')
+        } else {
+          showSnackbar(`✅ ${dedupedGlass.length} adet cam fiyatı bulundu`, 'success')
+        }
       } else {
         showSnackbar('⚠️ Bu araç için henüz cam fiyatı tanımlanmamış', 'warning')
       }
     } catch (error) {
       console.error('❌ Cam fiyatları yükleme hatası:', error)
       setAvailableGlassPrices([])
+      setGlassSearchOptions([])
+      setHasAttemptedGlassLookup(true)
       showSnackbar('Cam fiyatları yüklenirken hata oluştu', 'error')
     }
   }
@@ -469,9 +666,25 @@ export default function ClaimForm({
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleItemChange = (field: keyof ClaimItem, value: string | number | boolean) => {
+  const nullableFields: Array<keyof ClaimItem> = [
+    'glass_position_id',
+    'glass_type_id',
+    'glass_brand_id',
+    'glass_color_id',
+    'glass_operation_id',
+    'installation_method_id',
+    'service_location_id',
+  ]
+
+  const handleItemChange = (field: keyof ClaimItem, value: string | number | boolean | null) => {
     setCurrentItem(prev => {
-      const updated = { ...prev, [field]: value }
+      let nextValue: typeof value | null = value
+
+      if (nullableFields.includes(field) && typeof value === 'string' && value.trim() === '') {
+        nextValue = null
+      }
+
+      const updated = { ...prev, [field]: nextValue }
       
       // Fiyat hesaplama
       if (field === 'unit_price' || field === 'quantity') {
@@ -500,14 +713,14 @@ export default function ClaimForm({
 
     const newItem: ClaimItem = {
       id: Date.now().toString(), // Geçici ID
-      glass_position_id: currentItem.glass_position_id || '',
-      glass_type_id: currentItem.glass_type_id || '',
-      glass_brand_id: currentItem.glass_brand_id || '',
+      glass_position_id: currentItem.glass_position_id || null,
+      glass_type_id: currentItem.glass_type_id || null,
+      glass_brand_id: currentItem.glass_brand_id || null,
       glass_code: currentItem.glass_code || '',
-      glass_color_id: currentItem.glass_color_id || '',
-      glass_operation_id: currentItem.glass_operation_id || '',
-      installation_method_id: currentItem.installation_method_id || '',
-      service_location_id: currentItem.service_location_id || '',
+      glass_color_id: currentItem.glass_color_id || null,
+      glass_operation_id: currentItem.glass_operation_id || null,
+      installation_method_id: currentItem.installation_method_id || null,
+      service_location_id: currentItem.service_location_id || null,
       unit_price: currentItem.unit_price || 0,
       quantity: currentItem.quantity || 1,
       subtotal: currentItem.subtotal || 0,
@@ -523,21 +736,7 @@ export default function ClaimForm({
     setItems(prev => [...prev, newItem])
     
     // Formu sıfırla
-    setCurrentItem({
-      glass_position_id: '',
-      glass_type_id: '',
-      glass_brand_id: '',
-      glass_code: '',
-      glass_color_id: '',
-      glass_operation_id: '',
-      installation_method_id: '',
-      service_location_id: '',
-      unit_price: 0,
-      quantity: 1,
-      customer_contribution: false,
-      additional_material_cost: 0,
-      additional_material_reason: '',
-    })
+    setCurrentItem(getInitialItem())
     
     showSnackbar('Cam eklendi', 'success')
   }
@@ -557,10 +756,58 @@ export default function ClaimForm({
     console.log('🎯 Autocomplete\'ten seçilen cam:', glass)
     
     // ID'leri kontrol et - eğer yoksa name'lerden bulmaya çalış
-    let glassPositionId = String(glass.glass_position_id || '')
-    let glassTypeId = String(glass.glass_type_id || '')
-    let glassBrandId = String(glass.glass_brand_id || '')
-    let glassColorId = String(glass.glass_color_id || '')
+    let glassPositionId: string | null = glass.glass_position_id ? String(glass.glass_position_id) : null
+    let glassTypeId: string | null = glass.glass_type_id ? String(glass.glass_type_id) : null
+    let glassBrandId: string | null = glass.glass_brand_id ? String(glass.glass_brand_id) : null
+    let glassColorId: string | null = glass.glass_color_id ? String(glass.glass_color_id) : null
+
+    const normalizeText = (text: string) =>
+      text
+        .toLowerCase()
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c')
+        .trim()
+
+    // 0️⃣ Eğer view'den isimler geldiyse doğrudan eşleştir
+    if (!glassPositionId && glass.glass_position_name) {
+      const match = glassPositions.find(
+        p => normalizeText(p.name) === normalizeText(glass.glass_position_name)
+      )
+      if (match) {
+        glassPositionId = match.id
+      }
+    }
+
+    if (!glassTypeId && glass.glass_type_name) {
+      const match = glassTypes.find(
+        t => normalizeText(t.name) === normalizeText(glass.glass_type_name)
+      )
+      if (match) {
+        glassTypeId = match.id
+      }
+    }
+
+    if (!glassBrandId && glass.glass_brand_name) {
+      const match = glassBrands.find(
+        b => normalizeText(b.name) === normalizeText(glass.glass_brand_name)
+      )
+      if (match) {
+        glassBrandId = match.id
+      }
+    }
+
+    if (!glassColorId && glass.glass_color_name) {
+      const match = glassColors.find(
+        c => normalizeText(c.name) === normalizeText(glass.glass_color_name)
+      )
+      if (match) {
+        glassColorId = match.id
+      }
+    }
     
     // ⚠️ VERİTABANI SORUNU: glass_prices tablosunda ID'ler ve name'ler NULL
     // Geçici çözüm: position_text, features, supplier kullanarak akıllı eşleştirme
@@ -666,20 +913,8 @@ export default function ClaimForm({
     
     // 2️⃣ CAM TİPİ EŞLEŞTİRME (features veya supplier)
     if (!glassTypeId) {
-      const normalizeTextForType = (text: string) => {
-        return text
-          .toLowerCase()
-          .replace(/ı/g, 'i')
-          .replace(/ğ/g, 'g')
-          .replace(/ü/g, 'u')
-          .replace(/ş/g, 's')
-          .replace(/ö/g, 'o')
-          .replace(/ç/g, 'c')
-          .trim()
-      }
-      
-      const features = normalizeTextForType(String(glass.features || ''))
-      const supplier = normalizeTextForType(String(glass.supplier || ''))
+      const features = normalizeText(String(glass.features || ''))
+      const supplier = normalizeText(String(glass.supplier || ''))
       console.log('🔎 Cam tipi aranıyor:', features, 'supplier:', supplier)
       
       let matchedType = null
@@ -691,8 +926,8 @@ export default function ClaimForm({
         features.includes('lam')
       ) {
         matchedType = glassTypes.find(t => 
-          normalizeTextForType(t.name).includes('lamine') ||
-          normalizeTextForType(t.name).includes('laminated')
+          normalizeText(t.name).includes('lamine') ||
+          normalizeText(t.name).includes('laminated')
         )
       }
       // TEMPERE varyasyonları
@@ -703,8 +938,8 @@ export default function ClaimForm({
         features.includes('sert')
       ) {
         matchedType = glassTypes.find(t => 
-          normalizeTextForType(t.name).includes('tempere') ||
-          normalizeTextForType(t.name).includes('tempered')
+          normalizeText(t.name).includes('tempere') ||
+          normalizeText(t.name).includes('tempered')
         )
       }
       // YERLİ / ORİJİNAL / İTHAL eşleştirmesi (veritabanında bunlar var)
@@ -712,7 +947,7 @@ export default function ClaimForm({
         supplier.includes('yerli') ||
         features.includes('yerli')
       ) {
-        matchedType = glassTypes.find(t => normalizeTextForType(t.name).includes('yerli'))
+        matchedType = glassTypes.find(t => normalizeText(t.name).includes('yerli'))
       }
       else if (
         supplier.includes('orijinal') ||
@@ -721,14 +956,14 @@ export default function ClaimForm({
         features.includes('original') ||
         supplier.includes('oem')
       ) {
-        matchedType = glassTypes.find(t => normalizeTextForType(t.name).includes('orijinal'))
+        matchedType = glassTypes.find(t => normalizeText(t.name).includes('orijinal'))
       }
       else if (
         supplier.includes('ithal') ||
         supplier.includes('import') ||
         features.includes('ithal')
       ) {
-        matchedType = glassTypes.find(t => normalizeTextForType(t.name).includes('ithal'))
+        matchedType = glassTypes.find(t => normalizeText(t.name).includes('ithal'))
       }
       // Varsayılan: Pozisyona göre tahmin
       else {
@@ -747,18 +982,6 @@ export default function ClaimForm({
     // 3️⃣ CAM MARKASI EŞLEŞTİRME (supplier = cam markası!)
     if (!glassBrandId && glass.supplier) {
       // Türkçe karakterleri normalize et
-      const normalizeText = (text: string) => {
-        return text
-          .toLowerCase()
-          .replace(/ı/g, 'i')
-          .replace(/ğ/g, 'g')
-          .replace(/ü/g, 'u')
-          .replace(/ş/g, 's')
-          .replace(/ö/g, 'o')
-          .replace(/ç/g, 'c')
-          .trim()
-      }
-      
       const supplier = normalizeText(String(glass.supplier))
       console.log('🔎 Cam markası aranıyor (supplier):', supplier)
       console.log('📋 Mevcut cam markaları:', glassBrands.map(b => b.name))
@@ -832,20 +1055,8 @@ export default function ClaimForm({
     // 4️⃣ CAM RENGİ EŞLEŞTİRME (genelde Renksiz ama features'tan tahmin edilebilir)
     if (!glassColorId) {
       // normalizeText fonksiyonu yukarıda tanımlandı, tekrar kullanıyoruz
-      const normalizeTextForColor = (text: string) => {
-        return text
-          .toLowerCase()
-          .replace(/ı/g, 'i')
-          .replace(/ğ/g, 'g')
-          .replace(/ü/g, 'u')
-          .replace(/ş/g, 's')
-          .replace(/ö/g, 'o')
-          .replace(/ç/g, 'c')
-          .trim()
-      }
-      
-      const features = normalizeTextForColor(String(glass.features || ''))
-      const stockName = normalizeTextForColor(String(glass.stock_name || ''))
+      const features = normalizeText(String(glass.features || ''))
+      const stockName = normalizeText(String(glass.stock_name || ''))
       console.log('🔎 Cam rengi tahmin ediliyor...')
       
       let matchedColor = null
@@ -860,13 +1071,13 @@ export default function ClaimForm({
         stockName.includes('renkli')
       ) {
         matchedColor = glassColors.find(c => {
-          const colorName = normalizeTextForColor(c.name)
+          const colorName = normalizeText(c.name)
           return colorName.includes('renkli') || colorName.includes('colored')
         })
       } else {
         // Varsayılan: Renksiz
         matchedColor = glassColors.find(c => {
-          const colorName = normalizeTextForColor(c.name)
+          const colorName = normalizeText(c.name)
           return colorName.includes('renksiz') || colorName.includes('clear')
         })
       }
@@ -909,24 +1120,7 @@ export default function ClaimForm({
   // Cam fiyatından otomatik doldurma (Liste'den seçim)
   const handleSelectGlassPrice = (glassPrice: GlassOption) => {
     console.log('🎯 Liste\'den seçilen cam:', glassPrice)
-    
-    // Temel cam bilgileri
-    handleItemChange('glass_position_id', String(glassPrice.glass_position_id || ''))
-    handleItemChange('glass_type_id', String(glassPrice.glass_type_id || ''))
-    handleItemChange('glass_brand_id', String(glassPrice.glass_brand_id || ''))
-    handleItemChange('glass_color_id', String(glassPrice.glass_color_id || ''))
-    handleItemChange('glass_code', String(glassPrice.product_code || ''))
-    handleItemChange('unit_price', Number(glassPrice.price_colorless) || 0)
-    
-    // Özellikleri kontrol et ve notlara ekle
-    let notes = ''
-    if (glassPrice.has_camera) notes += 'Kamera aparatlı '
-    if (glassPrice.has_sensor) notes += 'Sensör aparatlı '
-    if (glassPrice.is_encapsulated) notes += 'Enkapsül '
-    if (glassPrice.features) notes += String(glassPrice.features) + ' '
-    if (notes) handleItemChange('notes', notes.trim())
-    
-    showSnackbar(`✅ ${String(glassPrice.stock_name ?? '')} - Bilgiler otomatik dolduruldu`, 'success')
+    void handleGlassSelect(glassPrice)
   }
 
   const handleSubmit = async (status: 'draft' | 'submitted') => {
@@ -941,9 +1135,17 @@ export default function ClaimForm({
         body: JSON.stringify({
           claim: { ...formData, status },
           items: items.map(item => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { id, ...rest } = item
-            return rest
+            return {
+              ...rest,
+              glass_position_id: rest.glass_position_id || null,
+              glass_type_id: rest.glass_type_id || null,
+              glass_brand_id: rest.glass_brand_id || null,
+              glass_color_id: rest.glass_color_id || null,
+              glass_operation_id: rest.glass_operation_id || null,
+              installation_method_id: rest.installation_method_id || null,
+              service_location_id: rest.service_location_id || null,
+            }
           }),
         }),
       })
@@ -975,7 +1177,7 @@ export default function ClaimForm({
 
   const showSnackbar = (
     message: string,
-    severity: 'success' | 'error' | 'warning'
+    severity: 'success' | 'error' | 'warning' | 'info'
   ) => {
     setSnackbar({ open: true, message, severity })
   }
@@ -1705,7 +1907,7 @@ export default function ClaimForm({
             </Box>
             
             {/* Bulunan Cam Fiyatları Listesi */}
-            {availableGlassPrices.length > 0 && (
+            {availableGlassPrices.length > 0 ? (
               <Paper sx={{ p: 2, bgcolor: 'info.lighter', border: 1, borderColor: 'info.main' }}>
                 <Typography variant="subtitle2" color="info.main" gutterBottom fontWeight={600}>
                   🔍 {availableGlassPrices.length} Adet Cam Bulundu
@@ -1763,6 +1965,42 @@ export default function ClaimForm({
                   💡 Bir camı seçmek için üzerine tıklayın
                 </Alert>
               </Paper>
+            ) : (
+              hasAttemptedGlassLookup && (
+                <Paper
+                  sx={{
+                    p: 3,
+                    bgcolor: 'warning.lighter',
+                    border: 1,
+                    borderColor: 'warning.main',
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: 2,
+                  }}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={600} color="warning.darker">
+                      Cam fiyatı bulunamadı
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Bu araç için kayıtlı cam fiyatı yok. Yeni bir cam eklemek için Cam Fiyat Listesi sayfasına
+                      geçebilirsiniz.
+                    </Typography>
+                  </Box>
+                  <Button
+                    component={Link}
+                    href="/admin/glass-prices"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="contained"
+                    color="warning"
+                    startIcon={<Add />}
+                  >
+                    Cam Fiyatı Ekle
+                  </Button>
+                </Paper>
+              )
             )}
           </Box>
 
@@ -1772,7 +2010,7 @@ export default function ClaimForm({
                 select
                 fullWidth
                 label="Cam Türü"
-                value={currentItem.glass_position_id}
+                value={currentItem.glass_position_id ?? ""}
                 onChange={(e) => handleItemChange('glass_position_id', e.target.value)}
                 size="small"
               >
@@ -1789,7 +2027,7 @@ export default function ClaimForm({
                 select
                 fullWidth
                 label="Cam Tipi"
-                value={currentItem.glass_type_id}
+                value={currentItem.glass_type_id ?? ""}
                 onChange={(e) => handleItemChange('glass_type_id', e.target.value)}
                 size="small"
               >
@@ -1806,7 +2044,7 @@ export default function ClaimForm({
                 select
                 fullWidth
                 label="Cam Marka"
-                value={currentItem.glass_brand_id}
+                value={currentItem.glass_brand_id ?? ""}
                 onChange={(e) => handleItemChange('glass_brand_id', e.target.value)}
                 size="small"
               >
@@ -1823,7 +2061,7 @@ export default function ClaimForm({
                 select
                 fullWidth
                 label="İşlem Yeri"
-                value={currentItem.service_location_id}
+                value={currentItem.service_location_id ?? ""}
                 onChange={(e) => handleItemChange('service_location_id', e.target.value)}
                 size="small"
               >
@@ -1840,7 +2078,7 @@ export default function ClaimForm({
                 select
                 fullWidth
                 label="Cam Renk"
-                value={currentItem.glass_color_id}
+                value={currentItem.glass_color_id ?? ""}
                 onChange={(e) => handleItemChange('glass_color_id', e.target.value)}
                 size="small"
               >
@@ -1857,7 +2095,7 @@ export default function ClaimForm({
                 select
                 fullWidth
                 label="Montaj Şekli"
-                value={currentItem.installation_method_id}
+                value={currentItem.installation_method_id ?? ""}
                 onChange={(e) => handleItemChange('installation_method_id', e.target.value)}
                 size="small"
               >

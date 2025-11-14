@@ -65,14 +65,14 @@ export default function ClaimEditClient({ claimId }: { claimId: string }) {
         // Cam kalemlerini hazırla
         const items: ClaimItem[] = claim.claim_items?.map((item: any) => ({
           id: item.id,
-          glass_position_id: item.glass_position_id || '',
-          glass_type_id: item.glass_type_id || '',
-          glass_brand_id: item.glass_brand_id || '',
+          glass_position_id: item.glass_position_id || null,
+          glass_type_id: item.glass_type_id || null,
+          glass_brand_id: item.glass_brand_id || null,
           glass_code: item.glass_code || '',
-          glass_color_id: item.glass_color_id || '',
-          glass_operation_id: item.glass_operation_id || '',
-          installation_method_id: item.installation_method_id || '',
-          service_location_id: item.service_location_id || '',
+          glass_color_id: item.glass_color_id || null,
+          glass_operation_id: item.glass_operation_id || null,
+          installation_method_id: item.installation_method_id || null,
+          service_location_id: item.service_location_id || null,
           unit_price: item.unit_price || 0,
           quantity: item.quantity || 1,
           subtotal: item.subtotal || 0,
@@ -134,4 +134,3 @@ export default function ClaimEditClient({ claimId }: { claimId: string }) {
     />
   )
 }
-
