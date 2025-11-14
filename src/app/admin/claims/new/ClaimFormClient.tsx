@@ -3,13 +3,16 @@
 import { useRouter } from 'next/navigation'
 import ClaimForm from './ClaimForm'
 
-export function ClaimFormClient() {
+interface ClaimFormClientProps {
+  redirectPath?: string
+}
+
+export function ClaimFormClient({ redirectPath = '/admin/claims' }: ClaimFormClientProps) {
   const router = useRouter()
 
   const handleSuccess = () => {
-    router.push('/admin/claims')
+    router.push(redirectPath)
   }
 
   return <ClaimForm onSuccess={handleSuccess} />
 }
-

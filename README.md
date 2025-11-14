@@ -43,6 +43,13 @@ Next.js 15 (App Router, TypeScript) + Material UI v7 + Supabase ile geliştirilm
 - **İhbar Detay**: Tüm bilgilerin görüntülenmesi
 - **Durum Takibi**: Draft, Submitted, In Progress, Completed, Cancelled
 
+#### 🪟 Orijinal Cam Talep Modülü
+- **Bayi Akışı**: Talep oluşturma formu, durum takibi, dosya ve log yönetimi
+- **Admin Konsolu**: Filtreleme, CSV dışa aktarım, durum/atama yönetimi, dosya kontrolü
+- **Numaralandırma**: Otomatik `DOS-YYYY-#####` dosya ve `ORJ-YYYY-#####` talep numaraları
+- **Dosya Depolama**: Supabase Storage üzerinde tenant bazlı izole bucket, imzalı URL erişimi
+- **Audit Trail**: Durum, atama, not ve dosya aktiviteleri için otomatik log tutma
+
 #### 💰 Cam Fiyat Listesi
 - **Excel Import**: Toplu fiyat yükleme
 - **İlişkisel Yapı**: Araç markaları, modeller, cam tipleri ile tam entegre
@@ -92,6 +99,14 @@ Supabase Dashboard → SQL Editor'de aşağıdaki migration dosyalarını sıray
 9. `supabase/migrations/create_announcements_table.sql` - Duyurular tablosu
 10. `supabase/migrations/20241031_add_user_tenants_timestamps.sql` - User_tenants tarihleri
 11. `supabase/migrations/20241031_alter_claim_items_additional_materials.sql` - Claim items ek alanlar
+12. `supabase/migrations/001_create_case_files.sql` - Original cam case dosyaları
+13. `supabase/migrations/002_create_original_glass_request_reasons.sql` - Talep sebep tablosu ve seed verileri
+14. `supabase/migrations/003_create_original_glass_requests.sql` - Orijinal cam talep ana tablosu
+15. `supabase/migrations/004_create_original_glass_request_files.sql` - Talep dosyaları
+16. `supabase/migrations/005_create_original_glass_request_logs.sql` - Talep logları
+17. `supabase/migrations/006_create_original_glass_functions.sql` - Otomatik numara & log tetikleyicileri
+18. `supabase/migrations/007_setup_original_glass_storage.sql` - Storage bucket ve RLS politikaları
+19. `supabase/migrations/009_update_original_glass_requests_notifications.sql` - Bildirim odaklı alanlar
 
 ### 4. Environment Variables
 
@@ -108,6 +123,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE=your-service-role-key
 NEXT_PUBLIC_APP_NAME=DostGlass
+ORIGINAL_GLASS_BUCKET=original_glass_files
+SUPABASE_FUNCTIONS_URL=https://your-project.supabase.co/functions/v1
+NOTIFY_SLACK_WEBHOOK_URL=
+NOTIFY_EMAIL_API_URL=
+NOTIFY_EMAIL_API_KEY=
+NOTIFY_EMAIL_TO=
 ```
 
 **Supabase bilgilerinizi nereden bulabilirsiniz:**
@@ -150,6 +171,16 @@ npm run dev
 
 Tarayıcınızda [http://localhost:3000/login](http://localhost:3000/login) adresini açın.
 
+### 8. Bildirim Fonksiyonlarını Yayına Alın
+
+```bash
+supabase functions deploy notify-new-request
+supabase functions deploy notify-status-change
+supabase functions deploy delivery-reminder
+```
+
+Supabase Dashboard → Edge Functions üzerinden gerekli environment değişkenlerini (Slack/email) tanımlayın ve `delivery-reminder` fonksiyonu için günlük bir cron planlayın (ör. `0 6 * * *`).
+
 ## 📁 Proje Yapısı
 
 ```
@@ -161,17 +192,21 @@ dostlarglass/
 │   │   │   ├── price-query/       # Fiyat sorgulama
 │   │   │   ├── glass-prices/      # Cam fiyat listesi
 │   │   │   ├── users/             # Kullanıcı yönetimi
+│   │   │   ├── orjinal-cam-talepleri/       # Orijinal cam talepleri yönetimi
 │   │   │   ├── claims/            # İhbar yönetimi
 │   │   │   ├── announcements/     # Duyuru yönetimi
 │   │   │   ├── vehicles/          # Araç kayıtları
 │   │   │   └── settings/          # Ayarlar
 │   │   ├── bayi/
-│   │   │   └── price-query/       # Bayi fiyat sorgulama
+│   │   │   ├── price-query/       # Bayi fiyat sorgulama
+│   │   │   ├── orjinal-cam-talebi/           # Bayi orijinal cam talep formu & giriş
+│   │   │   ├── orjinal-cam-talep-listesi/    # Bayi talep listesi ve detayları
 │   │   ├── api/                    # API Routes
 │   │   │   ├── dashboard/          # Dashboard API
 │   │   │   ├── price-query/        # Fiyat sorgulama API
 │   │   │   ├── claims/             # İhbar API
 │   │   │   ├── glass-prices/       # Cam fiyat API
+│   │   │   ├── original-glass-requests/      # Orijinal cam talep API
 │   │   │   └── parameters/         # Parametrik veri API
 │   │   ├── login/                  # Login sayfası
 │   │   └── providers.tsx           # Theme & Context Providers
@@ -184,6 +219,8 @@ dostlarglass/
 │   │   │   └── TopListsChart.tsx
 │   │   ├── price-query/            # Fiyat sorgulama bileşenleri
 │   │   │   └── PriceQueryClient.tsx
+│   │   ├── original-glass/         # Orijinal cam ortak bileşenler
+│   │   │   └── OriginalGlassRequestDetail.tsx
 │   │   ├── AdminLayout.tsx         # Admin layout ve menü
 │   │   └── BreakingNewsCarousel.tsx # Duyuru carousel'i
 │   ├── lib/                        # Yardımcı fonksiyonlar
@@ -202,7 +239,12 @@ dostlarglass/
 │   └── seed-all-vehicles.ts
 ├── supabase/
 │   ├── schema.sql                  # Ana şema
-│   └── migrations/                 # Migration dosyaları
+│   ├── migrations/                 # Migration dosyaları
+│   └── functions/                  # Supabase Edge function kodları
+│       ├── _shared/notifications.ts
+│       ├── notify-new-request/
+│       ├── notify-status-change/
+│       └── delivery-reminder/
 └── package.json
 ```
 
@@ -248,6 +290,18 @@ dostlarglass/
 - `GET /api/glass-prices` - Fiyat listesi
 - `POST /api/glass-prices` - Yeni fiyat
 - `POST /api/glass-prices/import` - Excel import
+
+### Orijinal Cam Talep API
+- `POST /api/original-glass-requests` - Bayi talep oluşturma
+- `GET /api/original-glass-requests` - Bayi talep listesi (pagination & filtre)
+- `GET /api/original-glass-requests/[id]` - Talep detayı (bayi & admin)
+- `PATCH /api/original-glass-requests/[id]` - Durum / not güncelleme (rol bazlı)
+- `POST /api/original-glass-requests/[id]/files` - Dosya yükleme (maks. 10MB)
+- `DELETE /api/original-glass-requests/[id]/files/[fileId]` - Dosya silme
+- `GET /api/original-glass-requests/[id]/files` - Dosya listesi
+- `GET /api/original-glass-requests/[id]/files/[fileId]/url` - İmzalı dosya linki (1 saat)
+- `GET /api/original-glass-requests/[id]/logs` - Talep log geçmişi
+- `GET /api/admin/original-glass-requests` - Admin listeleme & CSV export
 
 ### Parametrik Veri API
 - `GET /api/parameters/[table]` - Parametrik veri listesi

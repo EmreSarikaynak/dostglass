@@ -49,14 +49,14 @@ export interface ClaimFormData {
 
 export interface ClaimItem {
   id?: string
-  glass_position_id: string
-  glass_type_id: string
-  glass_brand_id: string
+  glass_position_id: string | null
+  glass_type_id: string | null
+  glass_brand_id: string | null
   glass_code: string
-  glass_color_id: string
-  glass_operation_id: string
-  installation_method_id: string
-  service_location_id: string
+  glass_color_id: string | null
+  glass_operation_id: string | null
+  installation_method_id: string | null
+  service_location_id: string | null
   unit_price: number
   quantity: number
   subtotal: number
@@ -74,4 +74,3 @@ export interface ParameterOption {
   name: string
   code?: string
 }
-

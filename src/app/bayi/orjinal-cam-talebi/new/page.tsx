@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
+import type { UserWithRole } from '@/lib/auth'
 import { getUserAndRole } from '@/lib/auth'
 import { AdminLayout } from '@/components/AdminLayout'
-import { ClaimFormClient } from '@/app/admin/claims/new/ClaimFormClient'
+import { OriginalGlassRequestForm } from './OriginalGlassRequestForm'
 
-export default async function BayiNewClaimPage() {
-  const user = await getUserAndRole()
+export default async function OriginalGlassRequestNewPage() {
+  const user = (await getUserAndRole()) as UserWithRole | null
 
   if (!user) {
     redirect('/login')
@@ -16,7 +17,7 @@ export default async function BayiNewClaimPage() {
 
   return (
     <AdminLayout userEmail={user.email} tenantName={user.tenantName} userRole={user.role}>
-      <ClaimFormClient redirectPath="/bayi/claims" />
+      <OriginalGlassRequestForm user={user} />
     </AdminLayout>
   )
 }
