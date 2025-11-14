@@ -106,8 +106,6 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
   const [claim, setClaim] = useState<ClaimDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [cities, setCities] = useState<Array<{ id: string; name: string | null }>>([])
-  const [districts, setDistricts] = useState<Array<{ id: string; name: string | null }>>([])
 
   const fetchClaim = useCallback(async () => {
     try {
@@ -128,44 +126,9 @@ export default function ClaimViewClient({ claimId }: { claimId: string }) {
     }
   }, [claimId])
 
-  const fetchCities = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cities')
-      const result = await response.json()
-      if (response.ok) {
-        setCities(result.data || [])
-      }
-    } catch (error) {
-      console.error('Cities fetch error:', error)
-    }
-  }, [])
-
-  const fetchDistricts = useCallback(async (cityId: string) => {
-    if (!cityId) {
-      setDistricts([])
-      return
-    }
-    try {
-      const response = await fetch(`/api/districts?cityId=${cityId}`)
-      const result = await response.json()
-      if (response.ok) {
-        setDistricts(result.data || [])
-      }
-    } catch (error) {
-      console.error('Districts fetch error:', error)
-    }
-  }, [])
-
   useEffect(() => {
     fetchClaim()
-    fetchCities()
-  }, [fetchClaim, fetchCities])
-
-  useEffect(() => {
-    if (claim?.incident_city_id) {
-      fetchDistricts(claim.incident_city_id)
-    }
-  }, [claim?.incident_city_id, fetchDistricts])
+  }, [fetchClaim])
 
   const handleExportPDF = () => {
     if (!claim) return

@@ -17,6 +17,7 @@ export interface AuthContext {
  * Returns both the user metadata (email/role) and the raw user_tenants row.
  */
 export async function getUserAndRole(_req?: NextRequest): Promise<AuthContext> {
+  void _req
   const user = await getCurrentUser()
   if (!user) {
     throw new Error('UNAUTHORIZED')

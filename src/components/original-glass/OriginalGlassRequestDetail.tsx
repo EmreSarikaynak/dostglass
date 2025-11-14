@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import {
   Box,
@@ -8,7 +8,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Grid,
   Tab,
   Tabs,
   Typography,
@@ -30,15 +29,12 @@ import {
 } from '@mui/material'
 import {
   CloudUpload as UploadIcon,
-  Visibility as VisibilityIcon,
   Download as DownloadIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Save as SaveIcon,
   Close as CloseIcon,
 } from '@mui/icons-material'
-import type { UserWithRole } from '@/lib/auth'
-import { supabaseBrowser } from '@/lib/supabaseClient'
 
 type RequestStatus = 'pending' | 'processing' | 'fulfilled' | 'rejected'
 
@@ -46,7 +42,6 @@ interface OriginalGlassRequestDetailProps {
   requestId: string
   currentUserId: string
   role: 'admin' | 'bayi'
-  adminUsers?: Array<{ userId: string; email: string }>
 }
 
 interface RequestData {
@@ -135,9 +130,7 @@ export function OriginalGlassRequestDetail({ requestId, currentUserId, role }: O
     promised_delivery_days: '',
   })
 
-  const supabase = useMemo(() => supabaseBrowser(), [])
-
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -160,11 +153,11 @@ export function OriginalGlassRequestDetail({ requestId, currentUserId, role }: O
     } finally {
       setLoading(false)
     }
-  }
+  }, [requestId])
 
   useEffect(() => {
     fetchRequest()
-  }, [requestId])
+  }, [fetchRequest])
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue)

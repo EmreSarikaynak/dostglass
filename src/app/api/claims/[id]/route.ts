@@ -108,6 +108,7 @@ export async function PUT(
       if (body.items.length > 0) {
         const items = body.items.map((item: Record<string, unknown>) => {
           const { id: _clientItemId, ...rest } = item
+          void _clientItemId
           return {
             ...rest,
             claim_id: id,

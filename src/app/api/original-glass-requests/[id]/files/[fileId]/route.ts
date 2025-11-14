@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient, getUserAndRole } from '@/utils/auth'
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string; fileId: string } }) {
+interface RouteContext {
+  params: {
+    id: string
+    fileId: string
+  }
+}
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const { params } = context
   try {
     const { user, userTenant } = await getUserAndRole()
     const admin = getAdminClient()

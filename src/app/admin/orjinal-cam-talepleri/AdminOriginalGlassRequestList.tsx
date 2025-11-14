@@ -175,9 +175,9 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
     severity: 'success',
   })
 
-  const showMessage = (message: string, severity: 'success' | 'error' | 'info') => {
+  const showMessage = useCallback((message: string, severity: 'success' | 'error' | 'info') => {
     setSnackbar({ open: true, message, severity })
-  }
+  }, [])
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -211,7 +211,7 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
     } finally {
       setLoading(false)
     }
-  }, [appliedFilters, paginationModel.page, paginationModel.pageSize])
+  }, [appliedFilters, paginationModel.page, paginationModel.pageSize, showMessage])
 
   useEffect(() => {
     fetchRequests()
@@ -266,7 +266,7 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
     }
   }
 
-  const openStatusDialog = (row: OriginalGlassRequestRow) => {
+  const openStatusDialog = useCallback((row: OriginalGlassRequestRow) => {
     setSelectedRequest(row)
     setStatusForm({
       status: row.status,
@@ -276,7 +276,7 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
       response_notes: row.response_notes || '',
     })
     setStatusDialogOpen(true)
-  }
+  }, [])
 
   const closeStatusDialog = () => {
     if (!statusSaving) {
@@ -336,13 +336,7 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
     }
   }
 
-  const openFilesDialog = async (row: OriginalGlassRequestRow) => {
-    setSelectedRequest(row)
-    setFilesDialogOpen(true)
-    await loadFiles(row.id)
-  }
-
-  const loadFiles = async (requestId: string) => {
+  const loadFiles = useCallback(async (requestId: string) => {
     try {
       setFilesLoading(true)
       const response = await fetch(`/api/original-glass-requests/${requestId}/files`)
@@ -360,7 +354,13 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
     } finally {
       setFilesLoading(false)
     }
-  }
+  }, [showMessage])
+
+  const openFilesDialog = useCallback(async (row: OriginalGlassRequestRow) => {
+    setSelectedRequest(row)
+    setFilesDialogOpen(true)
+    await loadFiles(row.id)
+  }, [loadFiles])
 
   const closeFilesDialog = () => {
     if (fileUploading) return
@@ -560,7 +560,7 @@ export function AdminOriginalGlassRequestList({ reasons, dealers, admins }: Admi
           formatDate(row.promised_delivery_date ?? (value as string | null)),
       },
     ],
-    [router]
+    [openFilesDialog, openStatusDialog, router]
   )
 
   return (

@@ -331,7 +331,6 @@ export default function ClaimForm({
     }, 500) // 500ms bekle
 
     return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glassSearchQuery, availableGlassPrices, formData.vehicle_model_id, formData.vehicle_brand_id])
 
   // Sürücü sigortalı ile aynı checkbox'u
@@ -1197,7 +1196,8 @@ export default function ClaimForm({
         body: JSON.stringify({
           claim: claimPayload,
           items: items.map(item => {
-            const { id, ...rest } = item
+            const { id: itemId, ...rest } = item
+            void itemId
             return {
               ...rest,
               glass_position_id: rest.glass_position_id || null,

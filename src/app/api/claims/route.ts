@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     if (body.items && body.items.length > 0) {
       const items = body.items.map((item: Record<string, unknown>) => {
         const { id: _clientItemId, ...rest } = item
+        void _clientItemId
         return {
           ...rest,
           claim_id: claim.id,

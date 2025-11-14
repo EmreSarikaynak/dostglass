@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminClient, getUserAndRole } from '@/utils/auth'
-import { REQUEST_SELECT, buildValidationErrors, fetchFullRequest } from '../../original-glass-requests/helpers'
+import { REQUEST_SELECT } from '../../original-glass-requests/helpers'
 
 export async function GET(request: NextRequest) {
   try {
