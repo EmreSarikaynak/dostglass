@@ -65,27 +65,6 @@ export function AnnouncementModal({ open, onClose, onSave, announcement }: Annou
     setError('')
   }, [announcement, open])
 
-  const quillModules = useMemo(() => ({
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ color: [] }, { background: [] }],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ align: [] }],
-      ['link', 'image'],
-      ['clean'],
-    ],
-  }), [])
-
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'color', 'background',
-    'list', 'bullet',
-    'align',
-    'link', 'image',
-  ]
-
   const handleSubmit = async () => {
     if (!title.trim()) {
       setError('Başlık zorunludur')
@@ -174,41 +153,13 @@ export function AnnouncementModal({ open, onClose, onSave, announcement }: Annou
               placeholder="Duyuru başlığını girin"
             />
 
-            <Box>
-              <Box sx={{ mb: 1, color: 'text.secondary', fontSize: '0.875rem' }}>
-                İçerik *
-              </Box>
-              <Box sx={{ 
-                '& .ql-container': { 
-                  minHeight: '300px',
-                  fontSize: '14px',
-                  borderRadius: '0 0 8px 8px',
-                },
-                '& .ql-toolbar': {
-                  borderRadius: '8px 8px 0 0',
-                  background: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
-                },
-                '& .ql-editor': {
-                  minHeight: '300px',
-                },
-                '& .ql-editor.ql-blank::before': {
-                  color: '#8B929C',
-                  fontStyle: 'normal',
-                },
-                borderRadius: '8px',
-                border: '1px solid',
-                borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-              }}>
-                <ReactQuill
-                  theme="snow"
-                  value={content}
-                  onChange={setContent}
-                  modules={quillModules}
-                  formats={quillFormats}
-                  placeholder="Duyuru içeriğini buraya yazın..."
-                />
-              </Box>
-            </Box>
+            <HTMLEditor
+              value={content}
+              onChange={setContent}
+              label="İçerik *"
+              rows={18}
+              showPreviewToggle
+            />
 
             <TextField
               label="Öncelik"
